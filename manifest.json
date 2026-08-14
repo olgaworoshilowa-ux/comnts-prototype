@@ -2,7 +2,7 @@
   "name": "Comnts",
   "short_name": "Comnts",
   "description": "Editor comments prototype",
-  "start_url": "./index.html",
+  "start_url": "./index.html?v=2026-08-14-standalone-fixed",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5f5f5",

@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#f5f5f5" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta name="comnts-build" content="2026-08-14-catalogue-solid" />
+  <meta name="comnts-build" content="2026-08-14-standalone-fixed" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/sofa.png" />
   <title>Comnts</title>
@@ -158,10 +158,8 @@
       /* Fill the real screen — no short shell that leaves a hole under the catalogue */
       .page {
         width: 100%;
-        height: 100%;
-        min-height: 100%;
-        min-height: 100dvh;
-        min-height: -webkit-fill-available;
+        height: var(--shell-h, 100dvh);
+        min-height: var(--shell-h, 100dvh);
         gap: 0;
         justify-content: stretch;
         align-items: stretch;
@@ -169,7 +167,8 @@
       }
       .phone {
         width: 100% !important;
-        height: 100% !important;
+        height: var(--shell-h, 100dvh) !important;
+        min-height: var(--shell-h, 100dvh) !important;
         max-width: none;
         border-radius: 0 !important;
         border: none !important;
@@ -179,7 +178,8 @@
       }
       .app {
         width: 100%;
-        height: 100%;
+        height: var(--shell-h, 100dvh);
+        min-height: var(--shell-h, 100dvh);
         position: relative;
       }
 
@@ -227,10 +227,11 @@
         left: auto !important;
       }
 
-      /* Catalogue — flush to bottom; solid base so grid does not bleed through safe-area */
+      /* Catalogue — fixed to viewport bottom (critical for Home Screen / standalone) */
       .catalogue,
       .phone .catalogue,
       #app .catalogue {
+        position: fixed !important;
         top: auto !important;
         bottom: 0 !important;
         left: 0 !important;
@@ -248,6 +249,7 @@
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
+        z-index: 28 !important;
       }
       .catalogue-handle {
         width: 80px !important;
@@ -629,9 +631,52 @@
       flex-shrink: 0;
     }
     .install-tip.hidden { display: none !important; }
-    /* Already running as home-screen app */
+    /* Already running as home-screen app — iOS caches aggressively; pin catalogue to viewport */
     @media all and (display-mode: standalone) {
       .install-tip { display: none !important; }
+      html, body {
+        height: 100% !important;
+        min-height: 100dvh !important;
+        min-height: -webkit-fill-available !important;
+      }
+      .page,
+      .phone,
+      #app {
+        height: var(--shell-h, 100dvh) !important;
+        min-height: var(--shell-h, 100dvh) !important;
+      }
+      .catalogue,
+      .phone .catalogue,
+      #app .catalogue {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+          #f5f5f5 !important;
+      }
+    }
+    /* Safari “Add to Home Screen” — display-mode may not match; JS adds .ios-standalone */
+    html.ios-standalone .page,
+    html.ios-standalone .phone,
+    html.ios-standalone #app {
+      height: var(--shell-h, 100dvh) !important;
+      min-height: var(--shell-h, 100dvh) !important;
+    }
+    html.ios-standalone .catalogue,
+    html.ios-standalone #app .catalogue {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+        #f5f5f5 !important;
     }
 
     /* ===== Grid background (Figma Grid 4) ===== */
@@ -3021,6 +3066,7 @@
         body.landscape .catalogue,
         .phone.landscape .catalogue,
         #app.landscape .catalogue {
+          position: fixed !important;
           bottom: 0 !important;
           left: 0 !important;
           right: 0 !important;
@@ -3665,16 +3711,30 @@
     let lastAspect = 0;
     let rotateRetryTimers = [];
 
+    function syncViewportShell() {
+      if (!isRealMobile()) return;
+      const vv = window.visualViewport;
+      let h = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+      if (vv && !composerFocused) {
+        h = Math.max(h, Math.round(vv.height + vv.offsetTop));
+      }
+      if (h > 0) {
+        document.documentElement.style.setProperty("--shell-h", h + "px");
+      }
+    }
+
     function syncAppHeight() {
-      // Shell is CSS 100% — only track height for keyboard math
+      // Shell height for Home Screen / standalone — catalogue is position:fixed to viewport
       if (composerFocused) {
         if (lockedAppHeight <= 0) {
           lockedAppHeight = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
         }
+        syncViewportShell();
         return;
       }
       const h = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
       if (h > 0) lockedAppHeight = h;
+      syncViewportShell();
     }
 
     function syncDeviceOrientation() {
@@ -4445,6 +4505,10 @@
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true;
+    if (isStandalone) {
+      document.documentElement.classList.add("ios-standalone");
+      syncViewportShell();
+    }
     if (isStandalone || localStorage.getItem(tipKey) === "1") {
       tip.classList.add("hidden");
     }
