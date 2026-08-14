@@ -1,0 +1,49 @@
+Comnts — iOS 26 comments prototype
+=================================
+
+Share link (GitHub Pages)
+  https://olgaworoshilowa-ux.github.io/comnts-prototype/
+
+Best way (phone, fullscreen)
+1. Open this folder on a Mac and run:
+     ./serve.sh
+2. On your iPhone (same Wi‑Fi), open the printed URL in Safari
+3. Share → Add to Home Screen
+4. Open the Home Screen icon (no Safari chrome)
+
+Desktop
+- Double-click index.html, or open http://127.0.0.1:8765/ after ./serve.sh
+- Use the sliders button (bottom-right, next to Undo) to switch Portrait / Landscape
+
+What to try
+- Tap Comments (speech bubble) in the right menu
+- Tap the canvas to leave a pin, or tap an existing pin to reply / @mention
+- Invite to collaborate → email → Viewer/Editor → Send Invite
+- Hide comments — three variants (sliders menu):
+    1 · Eye button     (default) — eye in the commenting top bar
+    2 · Settings toggle — More → Settings → Show comments
+    3 · More menu       — More → Hide comments
+
+Hard-refresh (Cmd+Shift+R) if the layout looks stale.
+
+---
+
+Лучший способ (телефон, полный экран)
+1. На Mac в этой папке запусти:
+     ./serve.sh
+2. На iPhone (тот же Wi‑Fi) открой URL в Safari
+3. Поделиться → На экран «Домой»
+4. Открой иконку — без строки Safari
+
+На компьютере
+- Двойной клик по index.html, или http://127.0.0.1:8765/ после ./serve.sh
+- Кнопка со слайдерами (справа внизу, рядом с Undo) — Portrait / Landscape
+
+Что попробовать
+- Comments в правом меню
+- Тап по холсту — новый пин; тап по пину — ответ / @mention
+- Invite to collaborate — email → роль → Send Invite
+- Скрыть комментарии — три варианта в меню слайдеров:
+    1 · кнопка глаза
+    2 · тогл в Settings
+    3 · пункт в меню More
