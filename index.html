@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#f5f5f5" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta name="comnts-build" content="2026-08-14-catalogue-no-hole" />
+  <meta name="comnts-build" content="2026-08-14-catalogue-solid" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/sofa.png" />
   <title>Comnts</title>
@@ -227,7 +227,7 @@
         left: auto !important;
       }
 
-      /* Catalogue — Figma 133:23112: hug tabs, safe-area only under tab row (no empty hole) */
+      /* Catalogue — flush to bottom; solid base so grid does not bleed through safe-area */
       .catalogue,
       .phone .catalogue,
       #app .catalogue {
@@ -239,10 +239,12 @@
         height: auto !important;
         min-height: 0 !important;
         max-height: none !important;
-        padding-bottom: 0 !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
         border-radius: 28px 28px 0 0 !important;
         transform: none !important;
-        background: rgba(245, 245, 245, 0.6) !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+          #f5f5f5 !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -256,7 +258,7 @@
       }
       .catalogue .tabs {
         margin-top: 8px !important;
-        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 8px !important;
         flex: 0 0 auto !important;
       }
       .canvas-tools {
@@ -388,6 +390,7 @@
         width: min(320px, calc(100% - 160px)) !important;
         transform: translateX(-50%) !important;
       }
+      @media (orientation: landscape) {
       html.landscape .catalogue,
       body.landscape .catalogue,
       .phone.landscape .catalogue,
@@ -401,7 +404,7 @@
         height: auto !important;
         max-height: none !important;
         min-height: 0 !important;
-        padding-bottom: 8px !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
         border-radius: 24px !important;
       }
       html.landscape .canvas-tools,
@@ -417,6 +420,7 @@
         right: calc(76px + env(safe-area-inset-right, 0px)) !important;
         top: max(84px, calc(env(safe-area-inset-top, 0px) + 72px)) !important;
       }
+      } /* end orientation:landscape chrome inside mobile */
       html.landscape .content {
         padding-top: 0 !important;
       }
@@ -511,11 +515,11 @@
       height: auto;
       min-height: 0;
       border-radius: 24px;
-      padding-bottom: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
     html.landscape .catalogue .tabs {
       justify-content: center;
-      padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+      padding: 8px;
       margin-top: 0;
       flex: 0 0 auto;
     }
@@ -1220,7 +1224,7 @@
       color: var(--text-beta);
     }
 
-    /* ===== Catalogue — Figma 133:23112 = 402×87. Phone: hug tabs; safe-area under tab labels only. ===== */
+    /* ===== Catalogue — Figma 133:23112. Mobile: flush bottom, solid glass base. ===== */
     .catalogue {
       position: absolute;
       left: 0;
@@ -1236,7 +1240,7 @@
       box-shadow: 0 4px 40px rgba(0, 0, 0, 0.16), var(--glass-highlight);
       overflow: hidden;
       box-sizing: border-box;
-      padding-bottom: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
       display: flex;
       flex-direction: column;
     }
@@ -1270,7 +1274,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+      padding: 8px;
       margin-top: 8px;
       flex: 0 0 auto;
       box-sizing: border-box;
@@ -2096,12 +2100,15 @@
         height: auto !important;
         min-height: 0 !important;
         max-height: none !important;
-        padding-bottom: 0 !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
         border-radius: 28px 28px 0 0 !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+          #f5f5f5 !important;
       }
       .catalogue .tabs,
       #app .catalogue .tabs {
-        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 8px !important;
         flex: 0 0 auto !important;
       }
     }
@@ -2703,12 +2710,15 @@
         min-height: 0 !important;
         max-height: none !important;
         border-radius: 24px !important;
-        padding-bottom: 0 !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+          #f5f5f5 !important;
       }
       .catalogue .tabs,
       .phone .catalogue .tabs,
       #app .catalogue .tabs {
-        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 8px !important;
         flex: 0 0 auto !important;
       }
       .canvas-tools {
@@ -2995,6 +3005,37 @@
     .phone.landscape .app.commenting .toast,
     .app.landscape.commenting .toast {
       bottom: 21px !important;
+    }
+
+    /*
+     * Mobile portrait catalogue — last word.
+     * Solid glass base + safe-area on the panel (not tabs) so the grid never shows through.
+     */
+    @media (max-width: 520px), (hover: none) and (pointer: coarse) {
+      @media (orientation: portrait) {
+        .catalogue,
+        .phone .catalogue,
+        #app .catalogue,
+        html.landscape .catalogue,
+        html.landscape #app .catalogue,
+        body.landscape .catalogue,
+        .phone.landscape .catalogue,
+        #app.landscape .catalogue {
+          bottom: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          width: 100% !important;
+          padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+          border-radius: 28px 28px 0 0 !important;
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+            #f5f5f5 !important;
+        }
+        .catalogue .tabs,
+        #app .catalogue .tabs {
+          padding: 8px !important;
+        }
+      }
     }
   </style>
 </head>
