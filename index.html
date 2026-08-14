@@ -13,7 +13,11 @@
   <meta name="theme-color" content="#f5f5f5" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta name="comnts-build" content="2026-08-14-catalogue-bleed" />
+  <meta name="comnts-build" content="2026-08-14-v2-inline" />
+  <script>
+    /* Runs before CSS — marks HTML version even if stylesheet is cached */
+    document.documentElement.dataset.comntsBuild = "2026-08-14-v2-inline";
+  </script>
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/sofa.png" />
   <title>Comnts</title>
@@ -227,29 +231,31 @@
         left: auto !important;
       }
 
-      /* Catalogue — fixed to viewport bottom (critical for Home Screen / standalone) */
+      /* Catalogue — mobile portrait: Figma 87px, flush bottom, NO safe-area hole */
       .catalogue,
       .phone .catalogue,
-      #app .catalogue {
+      #app .catalogue,
+      #catalogue {
         position: fixed !important;
         top: auto !important;
         bottom: 0 !important;
         left: 0 !important;
         right: 0 !important;
         width: 100% !important;
-        height: auto !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        height: 87px !important;
+        min-height: 87px !important;
+        max-height: 87px !important;
+        padding: 0 !important;
         border-radius: 28px 28px 0 0 !important;
         transform: none !important;
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
-          #f5f5f5 !important;
+        background: #f5f5f5 !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
-        z-index: 28 !important;
+        z-index: 99999 !important;
+        overflow: hidden !important;
       }
       .catalogue-handle {
         width: 80px !important;
@@ -258,7 +264,8 @@
         background: #c4c4c4 !important;
         flex-shrink: 0 !important;
       }
-      .catalogue .tabs {
+      .catalogue .tabs,
+      #catalogue .tabs {
         margin-top: 8px !important;
         padding: 8px !important;
         flex: 0 0 auto !important;
@@ -267,7 +274,7 @@
         top: auto !important;
         left: auto !important;
         right: 12px !important;
-        bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: 96px !important;
       }
 
       /* One safe-area only — on reply bar, not also on the sheet */
@@ -3053,18 +3060,29 @@
     }
 
     /*
-     * MOBILE PORTRAIT CATALOGUE — final authority.
-     * Reparented to <body> via JS (#catalogue). Bleed layer kills grid gap on Home Screen.
+     * MOBILE PORTRAIT CATALOGUE — CSS backup; JS pinCatalogueBottom() wins via inline styles.
      */
+    #buildStamp {
+      position: fixed;
+      top: max(2px, env(safe-area-inset-top, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      font: 600 10px/1.2 -apple-system, sans-serif;
+      letter-spacing: 0.02em;
+      color: rgba(0, 0, 0, 0.28);
+      z-index: 100000;
+      pointer-events: none;
+      user-select: none;
+    }
     html.mobile-portrait #catalogueBleed {
       display: block;
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      height: calc(96px + env(safe-area-inset-bottom, 0px));
+      height: 87px;
       background: #f5f5f5;
-      z-index: 9998;
+      z-index: 99998;
       pointer-events: none;
     }
     #catalogueBleed { display: none; }
@@ -3074,24 +3092,23 @@
       left: 0 !important;
       right: 0 !important;
       width: 100% !important;
-      max-width: none !important;
+      height: 87px !important;
+      min-height: 87px !important;
+      max-height: 87px !important;
       margin: 0 !important;
       padding: 0 !important;
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
       border-radius: 28px 28px 0 0 !important;
       background: #f5f5f5 !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
       box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.07) !important;
-      overflow: visible !important;
-      z-index: 9999 !important;
+      overflow: hidden !important;
+      z-index: 99999 !important;
       transform: none !important;
       box-sizing: border-box !important;
     }
     html.mobile-portrait #catalogue .tabs {
-      padding: 8px 8px max(8px, env(safe-area-inset-bottom, 0px)) !important;
+      padding: 8px !important;
       margin-top: 8px !important;
       flex: 0 0 auto !important;
     }
@@ -3102,6 +3119,7 @@
   </style>
 </head>
 <body>
+  <div id="buildStamp" aria-hidden="true">build: loading…</div>
   <div class="page">
     <div class="phone">
       <div class="app" id="app">
@@ -3608,6 +3626,7 @@
       renderMoreMenu();
       renderSettingsSheet();
       syncCatalogueVisibility();
+      pinCatalogueBottom();
       refreshIcons();
     }
 
@@ -3756,14 +3775,86 @@
       }
     }
 
-    function syncCatalogueVisibility() {
+    function pinCatalogueBottom() {
+      if (!isRealMobile()) return;
+      mountMobileCatalogue();
+      syncMobilePortraitClass();
+
+      const portrait = window.innerHeight >= window.innerWidth;
       const cat = document.getElementById("catalogue");
       const bleed = document.getElementById("catalogueBleed");
       const hide =
         state.mode === "commenting" ||
         !!state.selectedThreadId;
-      if (cat) cat.classList.toggle("catalogue-hidden", hide);
-      if (bleed) bleed.classList.toggle("catalogue-hidden", hide || !document.documentElement.classList.contains("mobile-portrait"));
+
+      /* Lock shell to real pixel height — Home Screen 100% is often short */
+      const shellH = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+      if (shellH > 0) {
+        document.documentElement.style.height = shellH + "px";
+        document.body.style.height = shellH + "px";
+        document.documentElement.style.setProperty("--shell-h", shellH + "px");
+      }
+
+      if (!portrait || !cat) {
+        if (cat) cat.style.cssText = "";
+        if (bleed) bleed.style.display = "none";
+        return;
+      }
+
+      const catStyle = {
+        position: "fixed",
+        bottom: "0px",
+        left: "0px",
+        right: "0px",
+        width: "100%",
+        height: "87px",
+        minHeight: "87px",
+        maxHeight: "87px",
+        margin: "0",
+        padding: "0",
+        background: "#f5f5f5",
+        borderRadius: "28px 28px 0 0",
+        zIndex: "99999",
+        display: hide ? "none" : "flex",
+        flexDirection: "column",
+        boxSizing: "border-box",
+        transform: "none",
+        backdropFilter: "none",
+        webkitBackdropFilter: "none",
+        overflow: "hidden",
+        boxShadow: "0 -2px 20px rgba(0,0,0,0.07)",
+      };
+      Object.assign(cat.style, catStyle);
+
+      const handle = cat.querySelector(".catalogue-handle");
+      if (handle) {
+        handle.style.marginTop = "8px";
+        handle.style.flexShrink = "0";
+      }
+      const tabs = cat.querySelector(".tabs");
+      if (tabs) {
+        tabs.style.marginTop = "8px";
+        tabs.style.padding = "8px";
+        tabs.style.flex = "0 0 auto";
+      }
+
+      if (bleed) {
+        Object.assign(bleed.style, {
+          display: hide ? "none" : "block",
+          position: "fixed",
+          bottom: "0px",
+          left: "0px",
+          right: "0px",
+          height: "87px",
+          background: "#f5f5f5",
+          zIndex: "99998",
+          pointerEvents: "none",
+        });
+      }
+    }
+
+    function syncCatalogueVisibility() {
+      pinCatalogueBottom();
     }
 
     function syncViewportShell() {
@@ -3835,7 +3926,7 @@
         const next = land ? "landscape" : "portrait";
         lastOrientApplied = next;
         applyOrientation(next);
-        syncCatalogueVisibility();
+        pinCatalogueBottom();
       };
       run();
       [100, 300, 600].forEach((ms) => {
@@ -4621,6 +4712,7 @@
         onDeviceRotated();
       } else {
         syncAppHeight();
+        pinCatalogueBottom();
       }
     });
 
@@ -4629,7 +4721,9 @@
     mountMobileCatalogue();
     syncAppHeight();
     syncMobilePortraitClass();
-    syncCatalogueVisibility();
+    pinCatalogueBottom();
+    const stamp = document.getElementById("buildStamp");
+    if (stamp) stamp.textContent = "build: " + (document.documentElement.dataset.comntsBuild || "?");
     lastAspect = window.innerWidth / Math.max(1, window.innerHeight);
     if (isRealMobile()) onDeviceRotated();
     else applyOrientation(state.orientation);
