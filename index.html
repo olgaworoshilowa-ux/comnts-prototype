@@ -1,0 +1,4466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=overlays-content"
+  />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Comnts" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#f5f5f5" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta name="comnts-build" content="2026-08-14-catalogue-87" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./assets/sofa.png" />
+  <title>Comnts</title>
+  <script src="./vendor/lucide.min.js"></script>
+  <style>
+    :root {
+      --editor-w: 402px;
+      --editor-h: 874px;
+      /* iOS 26 Liquid Glass — match Figma tokens */
+      --glass-fill: rgba(245, 245, 245, 0.6); /* ios surface/glass/small #f5f5f599 */
+      --glass-blur: 16px; /* Glass radius 16 */
+      --glass-saturate: 180%;
+      --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); /* #00000014 */
+      --glass-highlight: inset 0 0.5px 0 rgba(255, 255, 255, 0.72);
+      --glass-rim: inset 0 0 0 0.5px rgba(255, 255, 255, 0.28);
+      --icon-alpha: #393939; /* icon/alpha */
+      --sheet-radius: 34px;
+      --green: #1aa73f;
+      --primary-fill-gamma: rgba(15, 255, 15, 0.19); /* Figma primary/fill/gamma */
+      --pin-blue: #0177de;
+      --avatar-blue: #016ae1;
+      --text-beta: #575757;
+      --text-alpha: #2c2c2c;
+      --ga90: rgba(0, 0, 0, 0.78);
+      --ga80: rgba(0, 0, 0, 0.66);
+      --grid-bg: #f5f5f5;
+    }
+
+    /* Shared Liquid Glass surface (controls layer) */
+    .liquid-glass {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+        var(--glass-fill);
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      box-shadow: var(--glass-shadow), var(--glass-highlight), var(--glass-rim);
+      transition:
+        transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 0.18s ease,
+        filter 0.18s ease;
+    }
+    button.liquid-glass:active,
+    .liquid-glass.interactive:active {
+      transform: scale(0.96);
+      filter: brightness(0.98);
+      box-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.06),
+        var(--glass-highlight),
+        var(--glass-rim);
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .liquid-glass {
+        background: #f5f5f5;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .liquid-glass,
+      button.liquid-glass:active,
+      .liquid-glass.interactive:active,
+      .phone {
+        transition: none;
+        transform: none;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      touch-action: manipulation; /* kill 300ms / double-tap zoom */
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px 40px;
+      background:
+        radial-gradient(ellipse at 15% 0%, #e9eef6 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 100%, #e8f2ea 0%, transparent 50%),
+        #cfd5de;
+      font-family: "SF Pro Text", "SF Pro", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      color: #000;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Outer phone bezel matching Figma rounded-[50px] */
+    .phone {
+      width: var(--editor-w);
+      height: var(--editor-h);
+      border-radius: 50px;
+      border: 1px solid #d7d7d7;
+      overflow: hidden;
+      background: #fff;
+      position: relative;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.28);
+      transform-origin: top center;
+      /* Isolate fixed Figma coords so mobile scale stays consistent */
+      flex-shrink: 0;
+      transition: width 0.28s ease, height 0.28s ease;
+    }
+
+    @media (max-height: 920px) {
+      .phone { transform: scale(0.9); }
+    }
+    @media (max-height: 820px) {
+      .phone { transform: scale(0.8); margin-bottom: -80px; }
+    }
+
+    /*
+     * True mobile experience — edge-to-edge on the real device.
+     * No phone-in-phone frame, no fake status bar, safe-area aware.
+     */
+    @media (max-width: 520px), (hover: none) and (pointer: coarse) {
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-user-select: none;
+        user-select: none;
+        position: fixed;
+        inset: 0;
+      }
+      body {
+        padding: 0;
+        margin: 0;
+        min-height: 100%;
+        min-height: -webkit-fill-available;
+        background: #f5f5f5;
+        place-items: stretch;
+      }
+      /* Fill the real screen — no short shell that leaves a hole under the catalogue */
+      .page {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        min-height: 100dvh;
+        min-height: -webkit-fill-available;
+        gap: 0;
+        justify-content: stretch;
+        align-items: stretch;
+        overflow: hidden;
+      }
+      .phone {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        transform: none !important;
+      }
+      .app {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      /* Use the real iOS status bar — hide the Figma mock */
+      .status-bar { display: none !important; }
+
+      .content {
+        top: 0;
+        height: auto;
+        bottom: 0;
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+
+      /* Top chrome under the real notch / Dynamic Island */
+      .btn-close,
+      .ask-bar,
+      .side-stack,
+      .commenting-top {
+        top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+      }
+      .ask-bar {
+        left: 72px !important;
+        right: 72px !important;
+        width: auto !important;
+      }
+      .commenting-top {
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+      }
+      html.landscape .commenting-top,
+      html.landscape .app.commenting .commenting-top,
+      html.landscape #commentingTop,
+      body.landscape #commentingTop {
+        left: max(16px, env(safe-area-inset-left, 0px)) !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        width: auto !important;
+        max-width: none !important;
+        height: 56px !important;
+        top: max(12px, env(safe-area-inset-top, 0px)) !important;
+        transform: none !important;
+      }
+      .side-stack {
+        right: 12px !important;
+        left: auto !important;
+      }
+
+      /* Catalogue — Figma 133:23112 (87px) + safe-area, flush to bottom. Leave .ask-bar alone. */
+      .catalogue,
+      .phone .catalogue,
+      #app .catalogue {
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
+        min-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
+        max-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        border-radius: 28px 28px 0 0 !important;
+        transform: none !important;
+        background: rgba(245, 245, 245, 0.6) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+      }
+      .catalogue-handle {
+        width: 80px !important;
+        height: 4px !important;
+        margin-top: 8px !important;
+        background: #c4c4c4 !important;
+      }
+      .catalogue .tabs {
+        margin-top: 8px !important;
+        padding: 8px !important;
+        flex: 1 !important;
+      }
+      .canvas-tools {
+        top: auto !important;
+        left: auto !important;
+        right: 12px !important;
+        /* Sit just above Figma 87px catalogue + safe-area */
+        bottom: calc(95px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      /* One safe-area only — on reply bar, not also on the sheet */
+      .sheet,
+      .invite-overlay {
+        padding-bottom: 0 !important;
+      }
+      .reply-bar {
+        padding: 12px 16px max(12px, env(safe-area-inset-bottom, 0px)) !important;
+      }
+      .sheet.compose-only .reply-bar {
+        padding: 20px 16px max(16px, env(safe-area-inset-bottom, 0px)) !important;
+      }
+      /* Landscape floating sheet — only when device is actually landscape */
+      @media (orientation: landscape) {
+        html.landscape .sheet,
+        html.landscape #sheet {
+          left: 50% !important;
+          right: auto !important;
+          width: min(560px, calc(100% - 120px)) !important;
+          max-width: calc(100% - 120px) !important;
+          bottom: var(--sheet-bottom, max(12px, env(safe-area-inset-bottom, 0px)));
+          padding-bottom: 0 !important;
+          border-radius: 24px !important;
+          transform: translateX(-50%) translateY(calc(100% + 40px)) !important;
+        }
+        html.landscape #sheet.open,
+        html.landscape .sheet.open {
+          transform: translateX(-50%) translateY(0) !important;
+        }
+        html.landscape .invite-sheet,
+        html.landscape #inviteSheet {
+          left: 50% !important;
+          right: auto !important;
+          width: 560px !important;
+          max-width: calc(100% - 80px) !important;
+          max-height: calc(100% - 24px) !important;
+          padding-bottom: 16px !important;
+          border-radius: 36px !important;
+          bottom: var(--invite-bottom, 12px);
+          transform: translateX(-50%) !important;
+        }
+      }
+      .toast {
+        bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 16px !important;
+        right: 16px !important;
+        width: auto !important;
+      }
+
+      input, textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+
+      /* Install tip for Safari fullscreen / standalone */
+      .install-tip {
+        display: flex;
+        /* Sit above bottom tab bar + home indicator */
+        bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+      }
+
+      /* Real phone landscape: stay edge-to-edge — do NOT use the desktop 956×440 bezel */
+      html.landscape .phone,
+      .phone.landscape {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        transform: none !important;
+      }
+      html.landscape body,
+      body.landscape {
+        background: #f5f5f5 !important;
+        place-items: stretch !important;
+        padding: 0 !important;
+        min-height: 100dvh;
+      }
+      html.landscape .page,
+      body.landscape .page {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 100% !important;
+        align-items: stretch !important;
+        justify-content: stretch !important;
+      }
+      html.landscape .landscape-island,
+      body.landscape .landscape-island,
+      .phone.landscape .landscape-island {
+        display: none !important;
+      }
+      /* Room art: center on real landscape screens (not Figma 956 coords) */
+      html.landscape .room-group,
+      body.landscape .room-group,
+      .phone.landscape .room-group {
+        left: 50% !important;
+        top: 50% !important;
+        width: min(301px, 42vw) !important;
+        height: min(301px, 70vh) !important;
+        transform: translate(-50%, -52%) !important;
+      }
+      html.landscape .side-stack,
+      body.landscape .side-stack,
+      .phone.landscape .side-stack {
+        left: auto !important;
+        right: max(12px, env(safe-area-inset-right, 0px)) !important;
+        top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      }
+      html.landscape .btn-close,
+      body.landscape .btn-close {
+        left: max(16px, env(safe-area-inset-left, 0px)) !important;
+        top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      }
+      html.landscape .ask-bar,
+      body.landscape .ask-bar {
+        left: 50% !important;
+        right: auto !important;
+        top: max(16px, env(safe-area-inset-top, 0px)) !important;
+        width: min(320px, calc(100% - 160px)) !important;
+        transform: translateX(-50%) !important;
+      }
+      html.landscape .catalogue,
+      body.landscape .catalogue,
+      .phone.landscape .catalogue,
+      html.landscape #app .catalogue,
+      #app.landscape .catalogue {
+        left: max(16px, env(safe-area-inset-left, 0px)) !important;
+        right: auto !important;
+        width: min(356px, calc(100% - 200px)) !important;
+        bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+        top: auto !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        padding-bottom: 8px !important;
+        border-radius: 24px !important;
+      }
+      html.landscape .canvas-tools,
+      body.landscape .canvas-tools {
+        left: auto !important;
+        right: calc(80px + env(safe-area-inset-right, 0px)) !important;
+        bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+        top: auto !important;
+      }
+      html.landscape .more-menu,
+      body.landscape .more-menu {
+        left: auto !important;
+        right: calc(76px + env(safe-area-inset-right, 0px)) !important;
+        top: max(84px, calc(env(safe-area-inset-top, 0px) + 72px)) !important;
+      }
+      html.landscape .content {
+        padding-top: 0 !important;
+      }
+    }
+
+    /*
+     * Figma 128:15123 — iPhone Max landscape, menu collapsed.
+     * Frame 956×440. Island on the right short edge.
+     */
+    html.landscape .phone {
+      width: 956px;
+      height: 440px;
+      transform: none;
+      margin-bottom: 0;
+    }
+    html.landscape .app,
+    .phone .app,
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    html.landscape .status-bar { display: none !important; }
+    html.landscape .landscape-island { display: block; }
+    html.landscape .activity-avatars,
+    body.landscape .activity-avatars,
+    .phone.landscape .activity-avatars {
+      display: none !important;
+    }
+
+    html.landscape .content {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: auto;
+      padding-top: 0;
+    }
+
+    html.landscape .room-group {
+      left: 328px;
+      top: 69px;
+      width: 301px;
+      height: 301px;
+      transform: none;
+    }
+    html.landscape .sofa {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    html.landscape .btn-close {
+      left: 40px;
+      top: 20px;
+    }
+    html.landscape .ask-bar {
+      left: 50%;
+      top: 26px;
+      width: 320px;
+      height: 44px;
+      transform: translateX(-50%);
+      right: auto;
+      font-size: 17px;
+      padding: 0 10px 0 11px;
+      gap: 4px;
+    }
+    html.landscape .invite-sheet {
+      left: 50%;
+      right: auto;
+      width: 560px;
+      max-width: calc(100% - 80px);
+      margin: 0;
+      max-height: calc(100% - 24px);
+      border-radius: 36px;
+      transform: translateX(-50%);
+    }
+    html.landscape .side-stack {
+      left: 822px;
+      right: auto;
+      top: 20px;
+    }
+    html.landscape .more-menu {
+      left: 560px;
+      top: 84px;
+    }
+    html.landscape .catalogue {
+      left: 40px;
+      top: auto;
+      bottom: 20px;
+      width: 356px;
+      height: auto;
+      min-height: 0;
+      border-radius: 24px;
+      padding-bottom: 8px;
+    }
+    html.landscape .catalogue .tabs {
+      justify-content: center;
+      padding: 8px;
+      margin-top: 0;
+    }
+    html.landscape .catalogue .tab {
+      width: 68px;
+    }
+    html.landscape .canvas-tools {
+      left: auto !important;
+      /* Sit to the LEFT of the 56px side-stack (inset 78) + 12px gap — not in the same column */
+      right: 146px !important;
+      top: auto !important;
+      bottom: 20px !important;
+      gap: 16px;
+    }
+    html.landscape .sheet {
+      max-height: min(78%, 360px);
+    }
+    html.landscape .invite-sheet {
+      max-height: calc(100% - 24px);
+    }
+    html.landscape .toast {
+      left: 50%;
+      right: auto;
+      width: min(400px, calc(100% - 32px));
+      max-width: 400px;
+      bottom: 124px;
+      transform: translateX(-50%);
+    }
+    html.landscape .app.commenting .toast {
+      bottom: 21px;
+    }
+    html.landscape .proto-settings-menu {
+      left: auto;
+      right: 0;
+    }
+
+    .landscape-island {
+      display: none;
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      z-index: 50;
+      width: 37px;
+      height: 125px;
+      border-radius: 100px;
+      background: #000;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .activity-avatars {
+      display: none;
+      align-items: center;
+      height: 48px;
+      padding: 10px 12px;
+      border-radius: 100px;
+    }
+    .activity-avatars .av {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.14px;
+      margin-right: -12px;
+    }
+    .activity-avatars .av:last-child { margin-right: 0; }
+
+    @media (max-width: 1000px) {
+      html.landscape .phone { transform: scale(0.9); transform-origin: center center; }
+    }
+    @media (max-width: 900px) {
+      html.landscape .phone { transform: scale(0.78); }
+    }
+
+    .install-tip {
+      display: none;
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      z-index: 200;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(28, 28, 30, 0.92);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.35;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .install-tip button {
+      margin-left: auto;
+      border: none;
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      border-radius: 100px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .install-tip.hidden { display: none !important; }
+    /* Already running as home-screen app */
+    @media all and (display-mode: standalone) {
+      .install-tip { display: none !important; }
+    }
+
+    /* ===== Grid background (Figma Grid 4) ===== */
+    .grid-bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-color: var(--grid-bg);
+      background-image:
+        linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.045) 1px, transparent 1px);
+      background-size: 24px 24px;
+      z-index: 1;
+    }
+
+    /* ===== iOS status bar — exact asset from user (402×62, black glyphs) ===== */
+    .status-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 62px;
+      z-index: 30;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .status-bar img {
+      display: block;
+      width: 100%;
+      height: 62px;
+      object-fit: fill;
+      /* Glyphs are already black — no invert / Material icons */
+    }
+
+    /* ===== Content area (below status) ===== */
+    .content {
+      position: absolute;
+      left: 0; right: 0;
+      top: 62px;
+      height: 812px;
+      z-index: 2;
+    }
+
+    /* Room group: left 84, top 291, 234.6×230 */
+    .room-group {
+      position: absolute;
+      left: 84px;
+      top: 291px;
+      width: 234.615px;
+      height: 230px;
+      pointer-events: none;
+    }
+    .room-floor {
+      position: absolute;
+      inset: 0;
+      background-image: url("./assets/room-floor.png");
+      background-size: 47.14px 47.14px;
+      background-position: top left;
+      border-radius: 2px;
+    }
+    /* Sofa Frame: relative to content — 121.01, 358.05 → offset from room-group */
+    .sofa {
+      position: absolute;
+      left: 37.01px; /* 121.01 - 84 */
+      top: 67.05px;  /* 358.05 - 291 */
+      width: 159.502px;
+      height: 84.522px;
+      overflow: hidden;
+    }
+    .sofa img {
+      position: absolute;
+      height: 140.2%;
+      width: 113.43%;
+      left: -7.15%;
+      top: -20.59%;
+      max-width: none;
+      pointer-events: none;
+    }
+
+    /* ===== Pins — Figma pin + pin-buble + Avatar (26 on 32) ===== */
+    .pin {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      z-index: 10;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      padding: 0;
+    }
+    .pin[data-id="t1"] { left: 283px; top: 348px; }
+    .pin[data-id="t2"] { left: 126px; top: 258px; }
+    .pin[data-id="t3"] { left: 106px; top: 423px; }
+
+    .pin-visual {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      /* Soft shadow that follows the bubble + tip shape */
+      filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.16));
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    /* Outer speech bubble (Figma Bubble 32×32) */
+    .pin-bubble {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 18px;
+      background: var(--pin-blue);
+    }
+    .pin-tip {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 18px;
+      height: 18px;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .pin-tip img {
+      display: block;
+      width: 17.63px;
+      height: 17.63px;
+    }
+
+    /* Inner avatar (Figma Avatar 26×26, #016AE1) */
+    .pin-avatar {
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 26px;
+      height: 26px;
+      border-radius: 100px;
+      background: var(--avatar-blue);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.14px;
+      line-height: 24px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Unread — solid blue bubble; avatar color comes from author (inline) */
+    .pin.unread .pin-bubble { background: var(--pin-blue); }
+    .pin.unread .pin-avatar { color: #fff; }
+
+    /* Read — white bubble shell; avatar keeps author color */
+    .pin.read .pin-bubble { background: #fff; }
+    .pin.read .pin-avatar { color: #fff; }
+
+    /* Multi-message count — dark shell while unread */
+    .pin.unread.count .pin-bubble { background: #26262e; }
+    .pin.unread.count .pin-avatar { background: #26262e; }
+    .pin.unread.count .pin-tip img { filter: brightness(0) saturate(100%); }
+
+    /* Read + count: keep white shell, dark/blue avatar with count */
+    .pin.read.count .pin-avatar { background: #26262e; }
+
+    .pin.selected .pin-visual {
+      transform: scale(1.18);
+      /* Neutral black shadow only — no colored glow */
+      filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.16));
+    }
+
+    /* ===== Top chrome ===== */
+    /* Close button: 56×56 at left 12, top 68 */
+    .btn-close {
+      position: absolute;
+      left: 12px;
+      top: 68px;
+      width: 56px;
+      height: 56px;
+      z-index: 25;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--icon-alpha);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    /* Ask anything — Bernard: 204×48 at left 99, top 74 */
+    .ask-bar {
+      position: absolute;
+      left: 99px;
+      top: 74px;
+      width: 204px;
+      height: 48px;
+      z-index: 25;
+      border-radius: 296px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 12px 12px 16px;
+      color: var(--text-beta);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      font-size: 16px;
+      line-height: 24px;
+      pointer-events: none;
+    }
+    .ask-bar .sparkle {
+      color: var(--ga80);
+      font-size: 17px;
+      font-weight: 510;
+      flex-shrink: 0;
+    }
+
+    /* Commenting mode top bar variants */
+    .commenting-top {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 68px;
+      z-index: 45;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    /* Only in commenting mode — NOT when opening a thread from the editor */
+    .app.commenting .commenting-top {
+      display: flex !important;
+    }
+
+    /* Hide all editor chrome while a thread sheet is open (from editor or commenting) */
+    .app.commenting .btn-close,
+    .app.commenting .ask-bar,
+    .app.commenting .side-stack,
+    .app.commenting .more-menu,
+    .app.commenting .canvas-tools,
+    .app.commenting .catalogue,
+    .app.sheet-open .btn-close,
+    .app.sheet-open .ask-bar,
+    .app.sheet-open .side-stack,
+    .app.sheet-open .more-menu,
+    .app.sheet-open .canvas-tools,
+    .app.sheet-open .catalogue,
+    .app.sheet-open .commenting-top,
+    .app.settings-open .more-menu { display: none !important; }
+
+    .glass-circle {
+      width: 56px;
+      height: 56px;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      color: var(--icon-alpha);
+      font-size: 20px;
+      font-weight: 600;
+    }
+    /* Comments hidden — dark eye so users notice the off state */
+    .glass-circle.eye-hidden {
+      background: rgba(30, 30, 30, 0.92);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .glass-circle.eye-hidden.liquid-glass {
+      background: rgba(30, 30, 30, 0.92);
+    }
+    .comment-pill {
+      flex: 1;
+      height: 48px;
+      border-radius: 296px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      color: var(--text-beta);
+      font-size: 15px;
+      font-family: "SF Pro Text", "SF Pro", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      min-width: 0;
+    }
+    /* Bigger "leave a comment" pill — only while actively in commenting mode (no sheet) */
+    .app.commenting:not(.sheet-open) .comment-pill {
+      height: 56px;
+      padding: 0 20px;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .comment-pill img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+    .app.commenting:not(.sheet-open) .comment-pill img {
+      width: 22px;
+      height: 22px;
+      opacity: 1;
+    }
+
+    /* ===== Right side stack: left 334, top 68, width 56 ===== */
+    .side-stack {
+      position: absolute;
+      left: 334px;
+      top: 68px;
+      width: 56px;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Figma 63:5646 menu — glass capsule 56×286, p 6, items gap 2 */
+    .side-menu {
+      width: 56px;
+      border-radius: 100px;
+      padding: 6px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .side-menu-items {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      width: 100%;
+    }
+
+    .side-item {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      position: relative;
+      padding: 10px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .side-item img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      display: block;
+    }
+    /* Figma more-h is vertical dots → rotate to horizontal */
+    .side-item .icon-more {
+      width: 16px;
+      height: 16px;
+      transform: rotate(-90deg);
+    }
+    .side-item.btn-3d {
+      background: var(--green);
+      border-radius: 22px;
+      color: #fff;
+      font-family: "SF Pro", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      font-weight: 590;
+      font-size: 16px;
+      line-height: 24px;
+    }
+    .side-item.btn-3d img { display: none; }
+    .side-item.more-active {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* Figma 132:21711 — Home Screen Quick Actions Menu (option 2, before Settings) */
+    .more-menu {
+      display: none;
+      position: absolute;
+      left: 118px;
+      top: 333px;
+      width: 250px;
+      min-height: 272px;
+      height: auto;
+      padding: 12px 10px;
+      border-radius: 32px;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 0;
+      z-index: 40;
+      box-sizing: border-box;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.77);
+      border: 1px solid #fff;
+      backdrop-filter: blur(16.4px);
+      -webkit-backdrop-filter: blur(16.4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+    .more-menu.open {
+      display: flex;
+    }
+    .more-menu.option-3 {
+      min-height: 314px;
+    }
+    .more-menu button {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 44px;
+      height: 44px;
+      padding: 0 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-family: "SF Pro Text", "SF Pro", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 22px;
+      letter-spacing: -0.43px;
+      color: #1c1c1c;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .more-menu button span {
+      flex: 1;
+      min-width: 0;
+    }
+    .more-menu button:active {
+      opacity: 0.55;
+    }
+    .more-menu .lucide {
+      width: 22px;
+      height: 22px;
+      color: #1c1c1c;
+    }
+    .more-menu img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    /* Badge — Figma 63:5660 at left 28, top 194 within menu */
+    .badge {
+      position: absolute;
+      left: 28px;
+      top: 194px;
+      min-width: 16px;
+      min-height: 16px;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      border-radius: 100px;
+      background: var(--green);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      font-weight: 700;
+      font-size: 9.33px;
+      line-height: 1.4;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    .badge.hidden { display: none; }
+
+    .wand-btn {
+      width: 56px;
+      height: 56px;
+      border: none;
+      border-radius: 100px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--icon-alpha);
+    }
+    .wand-btn img { width: 24px; height: 24px; }
+
+    /* ===== Canvas tools: settings + undo — same 12px trailing inset as .side-stack ===== */
+    .canvas-tools {
+      position: absolute;
+      left: auto;
+      right: 12px;
+      top: 715px;
+      z-index: 25;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .undo-menu {
+      height: 52px;
+      padding: 4px;
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .undo-menu button {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--icon-alpha);
+      font-size: 16px;
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+    }
+
+    .proto-settings {
+      position: relative;
+      z-index: 1;
+    }
+    .proto-settings.open {
+      z-index: 50;
+    }
+    .proto-settings-btn {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      color: var(--icon-alpha);
+      display: grid;
+      place-items: center;
+    }
+    .proto-settings-btn:active {
+      transform: scale(0.96);
+    }
+    .proto-settings-menu {
+      display: none;
+      position: absolute;
+      left: auto;
+      right: 0;
+      bottom: calc(100% + 8px);
+      min-width: 168px;
+      max-width: min(230px, calc(100% + 196px));
+      max-height: min(280px, 52dvh);
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 6px;
+      border-radius: 18px;
+      flex-direction: column;
+      gap: 2px;
+      box-sizing: border-box;
+    }
+    .proto-settings.open .proto-settings-menu {
+      display: flex;
+    }
+    .proto-settings-sep {
+      height: 1px;
+      margin: 4px 8px;
+      background: rgba(0, 0, 0, 0.08);
+    }
+    .proto-settings-menu button {
+      border: none;
+      background: transparent;
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: left;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 510;
+      line-height: 1.2;
+      color: var(--text-alpha);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .proto-settings-menu button:active,
+    .proto-settings-menu button.selected {
+      background: rgba(0, 0, 0, 0.06);
+    }
+    .proto-settings-hint {
+      margin: 4px 12px 2px;
+      font-size: 11px;
+      font-weight: 590;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+      color: var(--text-beta);
+    }
+
+    /* ===== Catalogue — Figma 133:23112 = 402×87 (tabs + handle).
+       On phone: + safe-area inside, flush to bottom (no hole under the bar).
+       Do NOT touch .ask-bar here. ===== */
+    .catalogue {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: auto;
+      bottom: 0;
+      width: 100%;
+      /* Figma frame height 87px; safe-area pads inside so the outer edge stays flush */
+      height: calc(87px + env(safe-area-inset-bottom, 0px));
+      min-height: calc(87px + env(safe-area-inset-bottom, 0px));
+      max-height: calc(87px + env(safe-area-inset-bottom, 0px));
+      z-index: 28;
+      border-radius: 38px 38px 0 0;
+      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.16), var(--glass-highlight);
+      overflow: hidden;
+      box-sizing: border-box;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      display: flex;
+      flex-direction: column;
+    }
+    /* Desktop phone mock only — Figma portrait peek (tall sheet under tabs) */
+    @media (hover: hover) and (pointer: fine) {
+      html:not(.landscape) .phone:not(.landscape) .catalogue {
+        left: -1px;
+        right: auto;
+        top: 786px;
+        bottom: auto;
+        width: 402px;
+        height: 407px;
+        min-height: 0;
+        max-height: none;
+        padding-bottom: 0;
+        border-radius: 38px 38px 0 0;
+        display: block;
+      }
+    }
+    .catalogue-handle {
+      /* Figma 133:23113 — 80×4 at top 8 */
+      width: 80px;
+      height: 4px;
+      border-radius: 6px;
+      background: #c4c4c4;
+      margin: 8px auto 0;
+      flex-shrink: 0;
+    }
+    .tabs {
+      /* Figma tabulation bar: top 20 → after handle; padding 8 */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      margin-top: 8px;
+      flex: 1;
+      box-sizing: border-box;
+    }
+    .tab {
+      width: 72px;
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--icon-alpha);
+      font-family: "SF Pro Text", -apple-system, sans-serif;
+      font-size: 11px;
+      line-height: normal;
+    }
+    .tab .ico {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--icon-alpha);
+    }
+    .tab .ico img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 100px;
+      z-index: 40;
+      background: rgba(30, 30, 30, 0.55);
+      backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+      color: #fff;
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: none;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.35;
+      font-family: "SF Pro Text", "SF Pro", -apple-system, -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      box-shadow:
+        0 12px 32px rgba(0,0,0,0.22),
+        inset 0 0.75px 0 rgba(255,255,255,0.2);
+    }
+    .toast.show { display: flex; }
+    .app.commenting .toast { bottom: 40px; }
+    .toast button {
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+      flex-shrink: 0;
+      font-size: 12px;
+      padding: 2px;
+    }
+
+    /* ===== Comment thread sheet (from original flow screens) ===== */
+    .sheet {
+      position: absolute;
+      left: 0; right: 0;
+      bottom: var(--sheet-bottom, 0px);
+      z-index: 36;
+      border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+      /* Solid white (overrides any leftover glass styles) */
+      background-color: rgba(255, 255, 255, 1);
+      background-image: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+      /* Keep transform ONLY on .sheet — #sheet would beat .sheet.open by specificity */
+      transform: translateY(110%);
+      transition: transform 0.32s cubic-bezier(.2,.8,.2,1);
+      max-height: 48%;
+      display: flex;
+      flex-direction: column;
+    }
+    .sheet.open { transform: translateY(0); }
+    /* Closed sheet must not peek under the bezel (esp. landscape floating card) */
+    .sheet:not(.open) {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .sheet.open {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .sheet-handle {
+      width: 36px; height: 5px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.18);
+      margin: 10px auto 6px;
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    /* Figma 78:6717 — compose-only Chat-Box: no empty state label / spacer */
+    .messages.empty {
+      flex: 0;
+      padding: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .sheet.compose-only {
+      max-height: none;
+    }
+    .sheet.compose-only .sheet-handle {
+      display: none;
+    }
+    /* Landscape floating card — no iOS grabber */
+    html.landscape .sheet-handle,
+    body.landscape .sheet-handle,
+    .phone.landscape .sheet-handle {
+      display: none !important;
+    }
+    .sheet.compose-only .reply-bar {
+      padding: 20px 16px 28px;
+      border-radius: 24px 24px 0 0;
+    }
+    .msg { display: flex; gap: 10px; align-items: flex-start; }
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .msg-body { flex: 1; min-width: 0; }
+    .msg-meta { display: flex; gap: 6px; align-items: baseline; margin-bottom: 4px; }
+    .msg-meta .name {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-alpha);
+    }
+    .msg-meta .time {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      font-size: 12px;
+      color: #6d6d6d;
+    }
+    .msg-text {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      font-size: 14px;
+      line-height: 20px;
+      color: #4b4b4b;
+      letter-spacing: -0.14px;
+    }
+    .trash {
+      border: none; background: transparent;
+      color: #8e8e93; cursor: pointer;
+      width: 32px; height: 32px; font-size: 14px;
+    }
+    .reply-bar {
+      /* Figma Chat-Box Input 76:5946 / 82:7451 — flat surface/alpha */
+      background: #fff;
+      padding: 12px 16px 28px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .reply-composer {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      min-height: 20px;
+    }
+    .reply-highlight {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      margin: 0;
+      padding: 0;
+      border: none;
+      font-size: 16px;
+      line-height: 20px;
+      letter-spacing: -0.2px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      color: #393939;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .reply-highlight .mention {
+      color: #0177de; /* Figma info/text/beta */
+    }
+    .reply-highlight .ph {
+      color: #919191;
+    }
+    .reply-bar input {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      /* 16px minimum — iOS blocks/zooms awkwardly under 16 */
+      font-size: 16px;
+      line-height: 20px;
+      letter-spacing: -0.2px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+      background: transparent;
+      color: transparent;
+      caret-color: #2c2c2c;
+      min-width: 0;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .reply-bar input:placeholder-shown {
+      color: transparent;
+    }
+    .reply-bar input::placeholder {
+      color: transparent; /* shown via .reply-highlight .ph */
+    }
+    .reply-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .at-btn, .send-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      padding: 6px;
+    }
+    .at-btn { background: transparent; color: #8e8e93; font-size: 18px; font-weight: 600; }
+    /* Figma button icon 76:5954 — primary/fill/gamma + send-fill */
+    .send-btn {
+      background: var(--primary-fill-gamma);
+      color: var(--green);
+      box-sizing: border-box;
+    }
+    .send-btn img {
+      width: 14px;
+      height: 16px;
+      display: block;
+      object-fit: contain;
+    }
+
+    /* ===== Invite / @mention picker (Figma 82:7379) ===== */
+    .invite-picker {
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      /* No bottom padding — list must sit flush on the reply bar */
+      padding: 4px 4px 0;
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      box-shadow: none;
+      max-height: 234px;
+      overflow: auto;
+    }
+    .invite-picker.open { display: flex; }
+    #inviteList {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    /* Last row: square bottom so rounded corners don't leave gaps above the bar */
+    #inviteList .invite-row:last-child {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .invite-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px 12px 16px;
+      border: none;
+      background: #fff;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .invite-header img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    .invite-header span {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      line-height: 22px;
+      color: #393939;
+    }
+    .invite-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 10px 8px 12px;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 12px;
+      min-height: 48px;
+    }
+    .invite-row:hover { background: rgba(0, 0, 0, 0.04); }
+    .invite-row .av {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.14px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    /* Figma 121:12359 — invited email, dashed letter avatar */
+    .invite-row .av.email-av {
+      background: transparent;
+      color: #919191;
+      border: 1px dashed #949494;
+      line-height: 1;
+    }
+    .invite-row .meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .invite-row .name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      line-height: 22px;
+      color: #2c2c2c;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .invite-row .email {
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: -0.2px;
+      line-height: 20px;
+      color: #6d6d6d;
+    }
+    .sheet.invite-open .sheet-handle { display: none; }
+    .sheet.invite-open .messages { display: none; }
+    /* Composer top radius would punch corner gaps under the picker */
+    .sheet.invite-open .reply-bar,
+    .sheet.compose-only.invite-open .reply-bar {
+      border-radius: 0;
+    }
+
+    /* ===== Invite by email → success (Figma 121:12397 / 121:12484) ===== */
+    .invite-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 80;
+      background: rgba(57, 57, 57, 0.23);
+    }
+    .invite-overlay.open { display: block; }
+    /* Don't stack the @ picker / reply sheet under the email invite modal */
+    .app:has(#inviteOverlay.open) #sheet,
+    .app:has(#inviteOverlay.open) .sheet {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .invite-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: var(--invite-bottom, 0px);
+      max-height: min(78%, 640px);
+      overflow: auto;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
+        linear-gradient(90deg, rgba(247, 247, 247, 0.95), rgba(247, 247, 247, 0.95));
+      border-radius: 36px 36px 0 0;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 28px;
+      box-sizing: border-box;
+    }
+    .invite-sheet .drag {
+      width: 36px;
+      height: 5px;
+      border-radius: 100px;
+      background: rgba(0, 0, 0, 0.24);
+      margin: 5px auto 0;
+      flex-shrink: 0;
+    }
+    .invite-sheet-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      min-height: 44px;
+      padding: 0 16px 6px;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+    .invite-sheet.step-success .invite-sheet-top {
+      justify-content: flex-start;
+    }
+    .invite-sheet.step-success .drag {
+      width: 32px;
+      height: 4px;
+      margin: 16px auto 0;
+    }
+    .invite-close,
+    .invite-back {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 100px;
+      background: rgba(0, 0, 0, 0.04);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: #393939;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .invite-close img,
+    .invite-back img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      display: block;
+    }
+    .invite-back .lucide {
+      width: 22px;
+      height: 22px;
+      color: #393939;
+    }
+    .invite-panel { display: none; }
+    .invite-sheet.step-form #inviteFormPanel {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    .invite-sheet.step-success #inviteSuccessPanel { display: block; }
+    .invite-sheet.step-form .invite-back { display: none; }
+    .invite-sheet.step-success .invite-close { display: none; }
+
+    .invite-sheet-header {
+      text-align: center;
+      padding: 0 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .invite-sheet-header h2 {
+      margin: 0;
+      width: 100%;
+      max-width: 362px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      line-height: 26px;
+      color: #1c1c1c;
+    }
+    .invite-sheet-header p {
+      margin: 0;
+      width: 100%;
+      max-width: 362px;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: -0.2px;
+      line-height: 20px;
+      color: #747474;
+    }
+
+    /* Figma 121:12419 — form block below header (gap 32) */
+    .invite-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      padding: 32px 24px 24px;
+      box-sizing: border-box;
+    }
+    .invite-email-field {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 56px;
+      padding: 16px;
+      border-radius: 20px;
+      background: transparent;
+      box-sizing: border-box;
+      cursor: text;
+    }
+    .invite-email-field::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.44);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+    .invite-email-field img {
+      position: relative;
+      z-index: 1;
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      object-fit: contain;
+      display: block;
+    }
+    .invite-email-field input {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: -0.2px;
+      line-height: 20px;
+      color: #1c1c1c;
+      padding: 0;
+      height: 24px;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .invite-email-field input::placeholder {
+      color: #919191;
+    }
+
+    .invite-roles {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+    .invite-role {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      width: 100%;
+      padding: 12px 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+    }
+    .invite-role-radio {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      padding: 2px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      display: grid;
+      place-items: center;
+    }
+    .invite-role-radio img {
+      position: absolute;
+      display: block;
+    }
+    .invite-role-radio .off,
+    .invite-role-radio .on {
+      width: 20px;
+      height: 20px;
+      inset: 2px;
+    }
+    .invite-role-radio .dot {
+      width: 8px;
+      height: 8px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .invite-role .off { display: block; }
+    .invite-role .on,
+    .invite-role .dot { display: none; }
+    .invite-role[aria-checked="true"] .off { display: none; }
+    .invite-role[aria-checked="true"] .on,
+    .invite-role[aria-checked="true"] .dot { display: block; }
+    .invite-role-label {
+      flex: 1;
+      min-width: 0;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: -0.2px;
+      line-height: 24px;
+      color: #393939;
+      padding: 0;
+    }
+
+    .invite-primary-btn {
+      width: 100%;
+      min-height: 56px;
+      border: none;
+      border-radius: 100px;
+      background: #1aa73f;
+      color: #fff;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+      line-height: 28px;
+      padding: 14px 28px;
+      cursor: pointer;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .invite-primary-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .invite-primary-btn:not(:disabled):active {
+      filter: brightness(0.96);
+    }
+
+    .invite-success {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      padding: 16px 24px 40px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .invite-success-art {
+      width: 156px;
+      height: 156px;
+      object-fit: contain;
+      display: block;
+    }
+    .invite-success h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      line-height: 30px;
+      color: #1c1c1c;
+    }
+    .invite-success p {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+      color: #575757;
+      max-width: 354px;
+    }
+    .invite-success p strong {
+      font-weight: 600;
+      color: #1c1c1c;
+    }
+
+    .hidden { display: none !important; }
+    /* Option 2/3: no eye — back overlays left; pill is truly screen-centered */
+    #commentingTop.no-eye #eyeBtn {
+      display: none !important;
+    }
+    #commentingTop.no-eye {
+      justify-content: center;
+    }
+    #commentingTop.no-eye #backBtn {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+    }
+    #commentingTop.no-eye .comment-pill {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      flex: 0 0 auto !important;
+      width: max-content !important;
+      max-width: calc(100% - 136px);
+      margin: 0 auto;
+      justify-content: center;
+    }
+    /* Landscape only: Back | full-width pill (not absolute center) */
+    @media (orientation: landscape) {
+      #commentingTop.no-eye {
+        justify-content: flex-start;
+      }
+      #commentingTop.no-eye #backBtn {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+      }
+      #commentingTop.no-eye .comment-pill {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        max-width: none !important;
+        margin: 0;
+        justify-content: center;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+    }
+    /* If JS left html.landscape stuck while the phone is portrait — still center */
+    @media (orientation: portrait) {
+      #commentingTop.no-eye,
+      html.landscape #commentingTop.no-eye,
+      body.landscape #commentingTop.no-eye,
+      .phone.landscape #commentingTop.no-eye {
+        justify-content: center !important;
+      }
+      #commentingTop.no-eye #backBtn,
+      html.landscape #commentingTop.no-eye #backBtn {
+        position: absolute !important;
+        left: 0 !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+      }
+      #commentingTop.no-eye .comment-pill,
+      html.landscape #commentingTop.no-eye .comment-pill,
+      body.landscape #commentingTop.no-eye .comment-pill,
+      .phone.landscape #commentingTop.no-eye .comment-pill {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        flex: 0 0 auto !important;
+        width: max-content !important;
+        max-width: calc(100% - 136px) !important;
+        margin: 0 auto !important;
+        justify-content: center !important;
+      }
+
+      /* CRITICAL: stuck html.landscape must NOT float the comment sheet in portrait */
+      #sheet,
+      .sheet,
+      #sheet.open,
+      .sheet.open,
+      .sheet.compose-only,
+      html.landscape #sheet,
+      html.landscape .sheet,
+      html.landscape #sheet.open,
+      html.landscape .sheet.open,
+      html.landscape .sheet.compose-only,
+      body.landscape #sheet,
+      body.landscape .sheet,
+      .phone.landscape #sheet,
+      .phone.landscape .sheet,
+      #app.landscape #sheet,
+      #app.landscape .sheet {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        bottom: var(--sheet-bottom, 0px) !important;
+        border-radius: var(--sheet-radius) var(--sheet-radius) 0 0 !important;
+        box-shadow: none !important;
+        max-height: 48% !important;
+        transform: translateY(110%) !important;
+      }
+      #sheet.open,
+      .sheet.open,
+      html.landscape #sheet.open,
+      html.landscape .sheet.open,
+      body.landscape #sheet.open,
+      body.landscape .sheet.open,
+      .phone.landscape #sheet.open,
+      #app.landscape #sheet.open {
+        transform: translateY(0) !important;
+      }
+      html.landscape .sheet-handle,
+      body.landscape .sheet-handle,
+      .phone.landscape .sheet-handle {
+        display: block !important;
+      }
+      /* Catalogue: Figma 87px bar in portrait even if landscape class stuck */
+      .catalogue,
+      #app .catalogue,
+      html.landscape .catalogue,
+      html.landscape #app .catalogue,
+      body.landscape .catalogue,
+      .phone.landscape .catalogue,
+      #app.landscape .catalogue {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        top: auto !important;
+        bottom: 0 !important;
+        height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
+        min-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
+        max-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        border-radius: 28px 28px 0 0 !important;
+      }
+    }
+
+    /* ===== Settings sheet (Figma 132:21712) ===== */
+    .settings-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 85;
+      background: rgba(57, 57, 57, 0.23);
+    }
+    .settings-overlay.open { display: block; }
+    .settings-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 53px;
+      bottom: 0;
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.16);
+    }
+    .settings-drag {
+      width: 36px;
+      height: 5px;
+      border-radius: 100px;
+      background: rgba(0, 0, 0, 0.18);
+      margin: 8px auto 0;
+      flex-shrink: 0;
+    }
+    .settings-toolbar {
+      position: relative;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px 8px;
+      flex-shrink: 0;
+    }
+    .settings-toolbar h2 {
+      position: absolute;
+      left: 66px;
+      right: 66px;
+      margin: 0;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 590;
+      letter-spacing: -0.43px;
+      line-height: 22px;
+      color: #1c1c1c;
+    }
+    .settings-icon-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 100px;
+      background: rgba(120, 120, 128, 0.16);
+      color: #747474;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .settings-icon-btn.settings-check {
+      background: #1aa73f;
+      color: #fff;
+    }
+    .settings-icon-btn .lucide {
+      width: 18px;
+      height: 18px;
+    }
+    .settings-body {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      min-height: 52px;
+      padding: 0 16px;
+      gap: 12px;
+      border-top: 1px solid #e6e6e6;
+    }
+    .settings-row.stacked {
+      min-height: 68px;
+    }
+    .settings-copy {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .settings-label {
+      flex: 1;
+      min-width: 0;
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: -0.43px;
+      line-height: 22px;
+      color: #000;
+    }
+    .settings-copy .settings-label { flex: none; }
+    .settings-hint {
+      font-size: 15px;
+      line-height: 20px;
+      letter-spacing: -0.23px;
+      color: rgba(60, 60, 67, 0.6);
+    }
+    .settings-value {
+      flex-shrink: 0;
+      font-size: 17px;
+      letter-spacing: -0.43px;
+      line-height: 22px;
+      color: rgba(60, 60, 67, 0.6);
+      text-align: right;
+    }
+    .settings-chevron {
+      width: 16px;
+      height: 16px;
+      color: rgba(60, 60, 67, 0.45);
+      flex-shrink: 0;
+    }
+    .settings-chevron.green { color: #1aa73f; }
+    .ios-toggle {
+      width: 51px;
+      height: 31px;
+      border: none;
+      border-radius: 100px;
+      background: rgba(120, 120, 128, 0.16);
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      transition: background 0.2s ease;
+    }
+    .ios-toggle::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.2s ease;
+    }
+    .ios-toggle.on {
+      background: #34c759;
+    }
+    .ios-toggle.on::after {
+      transform: translateX(20px);
+    }
+    .settings-section {
+      padding: 18px 16px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.08px;
+      color: rgba(60, 60, 67, 0.6);
+    }
+    .settings-colors {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      padding: 0 16px 16px;
+    }
+    .settings-swatch {
+      aspect-ratio: 1;
+      border: 2px solid transparent;
+      border-radius: 16px;
+      cursor: pointer;
+      padding: 8px;
+      background-clip: content-box;
+      background-origin: content-box;
+    }
+    .settings-swatch.selected {
+      border-color: #d7d7d7;
+    }
+    .settings-swatch[data-bg="grid"] {
+      background-image:
+        linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+      background-size: 12px 12px;
+      background-color: #e8e8e8;
+    }
+    .settings-swatch.sky { background-color: #6eb4f5; }
+    .settings-swatch.rock { background-color: #8a7a62; }
+    .settings-swatch.sand { background-color: #c4a574; }
+    .settings-swatch.grass { background-color: #2d5a27; }
+    .settings-swatch.field { background-color: #7cb342; }
+
+    .app.commenting .canvas-hit { cursor: crosshair; }
+    .canvas-hit {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+    }
+    #pins {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #pins .pin {
+      pointer-events: auto;
+    }
+
+    /* Lucide icons */
+    .lucide {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      display: block;
+      flex-shrink: 0;
+    }
+    .btn-close .lucide,
+    .glass-circle .lucide,
+    .wand-btn .lucide { width: 22px; height: 22px; }
+    .ask-bar .lucide { width: 18px; height: 18px; color: var(--ga80); }
+    .comment-pill .lucide { width: 18px; height: 18px; color: var(--text-beta); opacity: 0.85; }
+    .app.commenting:not(.sheet-open) .comment-pill .lucide {
+      width: 22px;
+      height: 22px;
+      opacity: 1;
+    }
+    .undo-menu .lucide { width: 18px; height: 18px; }
+    .proto-settings-btn .lucide { width: 20px; height: 20px; }
+    .toast .lucide { width: 14px; height: 14px; }
+    .at-btn .lucide { width: 18px; height: 18px; color: #8e8e93; }
+    .trash .lucide { width: 16px; height: 16px; color: #8e8e93; }
+    .side-item .lucide { width: 22px; height: 22px; color: #393939; }
+    .tab .ico .lucide { width: 22px; height: 22px; }
+
+    /*
+     * Landscape commenting chrome — pin to the TOP like iOS landscape
+     * (island is on the short edge, no 62px status bar).
+     */
+    html.landscape .commenting-top,
+    html.landscape .app.commenting .commenting-top,
+    html.landscape #commentingTop,
+    body.landscape .commenting-top,
+    body.landscape #commentingTop,
+    .app.landscape #commentingTop,
+    .phone.landscape #commentingTop {
+      left: max(16px, env(safe-area-inset-left, 0px)) !important;
+      right: max(16px, env(safe-area-inset-right, 0px)) !important;
+      top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      width: auto !important;
+      max-width: none !important;
+      height: 56px !important;
+      transform: none !important;
+      gap: 12px !important;
+      align-items: center;
+      box-sizing: border-box;
+      z-index: 46;
+    }
+    html.landscape .commenting-top .glass-circle,
+    body.landscape .commenting-top .glass-circle,
+    html.landscape #commentingTop .glass-circle {
+      width: 56px;
+      height: 56px;
+    }
+    html.landscape .commenting-top .comment-pill,
+    html.landscape .app.commenting:not(.sheet-open) .comment-pill,
+    body.landscape .commenting-top .comment-pill {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      min-width: 0 !important;
+      height: 44px !important;
+      padding: 0 11px 0 16px !important;
+      gap: 12px !important;
+      font-size: 17px !important;
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    html.landscape .app.commenting:not(.sheet-open) .comment-pill img,
+    html.landscape .commenting-top .comment-pill img {
+      width: 18px !important;
+      height: 18px !important;
+    }
+    html.landscape .commenting-top .comment-pill span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    html.landscape .canvas-hit {
+      inset: 0;
+      width: auto;
+      height: auto;
+    }
+    /*
+     * Landscape composer — inset from Dynamic Island (short edge)
+     * and home indicator (bottom). Not full-bleed.
+     */
+    /*
+     * Landscape comment sheet — centered card.
+     * ONLY when the device is actually landscape (ignore stuck html.landscape in portrait).
+     */
+    @media (orientation: landscape) {
+    html.landscape #sheet,
+    html.landscape .sheet,
+    html.landscape .sheet.open,
+    html.landscape .sheet.compose-only {
+      left: 50% !important;
+      right: auto !important;
+      width: min(560px, calc(100% - 120px)) !important;
+      max-width: calc(100% - 120px) !important;
+      bottom: var(--sheet-bottom, 21px);
+      margin: 0 !important;
+      padding-bottom: 0 !important;
+      max-height: min(78%, 360px);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+      transform: translateX(-50%) translateY(calc(100% + 40px));
+      z-index: 45;
+    }
+    html.landscape #sheet:not(.open),
+    html.landscape .sheet:not(.open) {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    html.landscape #sheet.open,
+    html.landscape .sheet.open {
+      transform: translateX(-50%) translateY(0) !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+    /* Invite modal wins over the open reply sheet */
+    html.landscape .app:has(#inviteOverlay.open) #sheet.open,
+    html.landscape .app:has(#inviteOverlay.open) .sheet.open {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    html.landscape .reply-bar,
+    html.landscape .sheet.compose-only .reply-bar {
+      padding: 16px 16px max(12px, env(safe-area-inset-bottom, 0px)) !important;
+      gap: 16px;
+      border-radius: 0;
+      min-height: 60px;
+      box-sizing: border-box;
+    }
+    html.landscape .invite-picker {
+      max-height: min(260px, 58%);
+      padding: 4px 4px 0;
+    }
+    html.landscape .messages:not(.empty) {
+      padding-top: 16px;
+    }
+    html.landscape .sheet.invite-open .reply-bar,
+    html.landscape .sheet.compose-only.invite-open .reply-bar {
+      border-radius: 0 !important;
+    }
+    html.landscape .sheet {
+      max-height: min(78%, 360px);
+    }
+    html.landscape .sheet.invite-open {
+      max-height: min(85%, 380px) !important;
+    }
+    html.landscape .sheet.compose-only {
+      max-height: none;
+    }
+    } /* end orientation:landscape sheet card */
+
+    /*
+     * Landscape invite — iOS form sheet.
+     * Same vertical form as portrait, phone-width card, centered.
+     * Not a full-bleed strip and not a two-column bar.
+     */
+    html.landscape #inviteSheet,
+    html.landscape .invite-sheet,
+    body.landscape #inviteSheet,
+    .phone.landscape #inviteSheet,
+    .phone.landscape .invite-sheet,
+    .app.landscape #inviteSheet {
+      left: 50% !important;
+      right: auto !important;
+      width: 560px !important;
+      max-width: calc(100% - 80px) !important;
+      min-width: 0 !important;
+      height: auto !important;
+      max-height: calc(100% - 24px) !important;
+      bottom: var(--invite-bottom, 12px);
+      top: auto !important;
+      margin: 0 !important;
+      padding-bottom: 16px !important;
+      overflow: auto;
+      border-radius: 36px !important;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+      transform: translateX(-50%) !important;
+      box-sizing: border-box;
+    }
+    html.landscape .invite-sheet .drag {
+      margin: 8px auto 0;
+    }
+    html.landscape .invite-sheet-top {
+      position: relative;
+      top: auto;
+      right: auto;
+      left: auto;
+      min-height: 44px;
+      padding: 0 16px 0;
+      justify-content: flex-end;
+    }
+    html.landscape .invite-sheet.step-form #inviteFormPanel {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch;
+      gap: 0;
+      padding: 0 !important;
+      min-height: 0;
+      flex: none;
+    }
+    html.landscape .invite-sheet-header {
+      flex: none;
+      width: auto;
+      max-width: none;
+      text-align: center;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 24px;
+      gap: 6px;
+    }
+    html.landscape .invite-sheet-header h2,
+    html.landscape .invite-sheet-header p {
+      max-width: 362px;
+      text-align: center;
+    }
+    html.landscape .invite-sheet-header h2 {
+      font-size: 20px;
+      line-height: 26px;
+    }
+    html.landscape .invite-sheet-header p {
+      font-size: 15px;
+      line-height: 20px;
+      display: block;
+      -webkit-line-clamp: unset;
+      line-clamp: unset;
+      overflow: visible;
+    }
+    html.landscape .invite-form {
+      display: flex;
+      flex-direction: column;
+      grid-template-columns: none;
+      grid-template-areas: none;
+      gap: 12px;
+      align-items: stretch;
+      padding: 20px 24px 8px !important;
+      min-width: 0;
+      flex: none;
+    }
+    html.landscape .invite-email-field {
+      grid-area: auto;
+      min-height: 44px;
+      padding: 10px 14px;
+    }
+    html.landscape .invite-roles {
+      grid-area: auto;
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+    }
+    html.landscape .invite-role {
+      flex: none;
+      width: 100%;
+      padding: 10px 0;
+      min-height: 44px;
+      align-items: center;
+    }
+    html.landscape .invite-role-label {
+      flex: 1;
+    }
+    html.landscape .invite-primary-btn {
+      grid-area: auto;
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      padding: 10px 24px;
+      font-size: 17px;
+      line-height: 22px;
+    }
+    html.landscape .invite-sheet.step-success #inviteSuccessPanel {
+      display: block;
+      flex: none;
+      min-height: 0;
+      padding: 0;
+    }
+    html.landscape .invite-success {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      text-align: center;
+      gap: 16px;
+      padding: 8px 24px 16px;
+      width: 100%;
+    }
+    html.landscape .invite-success-art {
+      width: 96px;
+      height: 96px;
+      flex-shrink: 0;
+    }
+    html.landscape .invite-success h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 26px;
+    }
+    html.landscape .invite-success p {
+      font-size: 15px;
+      line-height: 20px;
+      max-width: 354px;
+    }
+    html.landscape .invite-success .invite-primary-btn {
+      width: 100%;
+      min-width: 0;
+      margin-left: 0;
+    }
+    html.landscape .canvas-tools {
+      left: auto !important;
+      right: 146px !important;
+      top: auto !important;
+      bottom: 20px !important;
+    }
+    html.landscape .settings-sheet {
+      left: 50% !important;
+      right: auto !important;
+      width: min(402px, calc(100% - 48px)) !important;
+      top: 12px !important;
+      bottom: 12px !important;
+      border-radius: 16px;
+      transform: translateX(-50%);
+    }
+
+    /* Real iPhone/iPad landscape (rotation), not only the proto toggle.
+       max-height:500px catches phones in landscape even if hover/pointer media is weird. */
+    @media (orientation: landscape) and (max-height: 500px),
+           (hover: none) and (pointer: coarse) and (orientation: landscape) {
+      /* Full landscape chrome even if JS class is late / missing */
+      .landscape-island { display: none !important; }
+      .status-bar { display: none !important; }
+      .activity-avatars { display: none !important; }
+      .sheet-handle { display: none !important; }
+
+      .content {
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        padding-top: 0 !important;
+      }
+      .room-group {
+        left: 50% !important;
+        top: 50% !important;
+        width: min(301px, 42vw) !important;
+        height: min(301px, 70vh) !important;
+        transform: translate(-50%, -52%) !important;
+      }
+      .btn-close {
+        left: max(16px, env(safe-area-inset-left, 0px)) !important;
+        top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      }
+      .ask-bar {
+        left: 50% !important;
+        right: auto !important;
+        top: max(16px, env(safe-area-inset-top, 0px)) !important;
+        width: min(320px, calc(100% - 160px)) !important;
+        height: 44px !important;
+        transform: translateX(-50%) !important;
+      }
+      .side-stack {
+        left: auto !important;
+        right: max(12px, env(safe-area-inset-right, 0px)) !important;
+        top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      }
+      .catalogue,
+      .phone .catalogue,
+      #app .catalogue {
+        left: max(16px, env(safe-area-inset-left, 0px)) !important;
+        right: auto !important;
+        width: min(356px, calc(100% - 200px)) !important;
+        bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+        top: auto !important;
+        /* Landscape floating card — hug Figma 87px content, not full-bleed height lock */
+        height: auto !important;
+        min-height: 87px !important;
+        max-height: none !important;
+        border-radius: 24px !important;
+        padding-bottom: 8px !important;
+      }
+      .canvas-tools {
+        left: auto !important;
+        right: calc(80px + env(safe-area-inset-right, 0px)) !important;
+        bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+        top: auto !important;
+      }
+      .more-menu {
+        left: auto !important;
+        right: calc(76px + env(safe-area-inset-right, 0px)) !important;
+        top: max(84px, calc(env(safe-area-inset-top, 0px) + 72px)) !important;
+      }
+
+      .sheet-handle {
+        display: none !important;
+      }
+      #commentingTop,
+      .commenting-top {
+        left: max(16px, env(safe-area-inset-left, 0px)) !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        top: 20px !important;
+        width: auto !important;
+        max-width: none !important;
+        height: 56px !important;
+        transform: none !important;
+        gap: 12px !important;
+      }
+      #commentingTop .glass-circle,
+      .commenting-top .glass-circle {
+        width: 56px;
+        height: 56px;
+      }
+      #commentingTop .comment-pill,
+      .commenting-top .comment-pill {
+        height: 44px !important;
+        padding: 0 11px 0 16px !important;
+        font-size: 17px !important;
+      }
+      /* Landscape: full-width no-eye pill — only when actually landscape */
+      #commentingTop.no-eye {
+        justify-content: flex-start !important;
+      }
+      #commentingTop.no-eye #backBtn {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+      }
+      #commentingTop.no-eye .comment-pill {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        flex: 1 1 auto !important;
+        width: auto !important;
+        max-width: none !important;
+        margin: 0 !important;
+        justify-content: center;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+      .toast {
+        left: 50% !important;
+        right: auto !important;
+        width: min(400px, calc(100% - 32px)) !important;
+        max-width: 400px !important;
+        bottom: 124px !important;
+        top: auto !important;
+        transform: translateX(-50%) !important;
+      }
+      .app.commenting .toast {
+        bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+      }
+      #sheet,
+      .sheet,
+      .sheet.open,
+      .sheet.compose-only {
+        left: 50% !important;
+        right: auto !important;
+        width: min(560px, calc(100% - 120px)) !important;
+        max-width: calc(100% - 120px) !important;
+        bottom: var(--sheet-bottom, max(12px, env(safe-area-inset-bottom, 0px)));
+        margin: 0 !important;
+        padding-bottom: 0 !important;
+        max-height: min(78%, 360px);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+        transform: translateX(-50%) translateY(calc(100% + 40px));
+        z-index: 45;
+      }
+      #sheet:not(.open),
+      .sheet:not(.open) {
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      #sheet.open,
+      .sheet.open {
+        transform: translateX(-50%) translateY(0) !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+      .app:has(#inviteOverlay.open) #sheet.open,
+      .app:has(#inviteOverlay.open) .sheet.open {
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      .reply-bar,
+      .sheet.compose-only .reply-bar {
+        padding: 16px 16px max(12px, env(safe-area-inset-bottom, 0px)) !important;
+        gap: 16px;
+        border-radius: 0;
+        min-height: 60px;
+        box-sizing: border-box;
+      }
+      .invite-picker {
+        max-height: 140px;
+        padding: 4px 4px 0;
+      }
+      .messages:not(.empty) {
+        padding-top: 16px;
+      }
+      .sheet.invite-open .reply-bar,
+      .sheet.compose-only.invite-open .reply-bar {
+        border-radius: 0 !important;
+      }
+      #inviteSheet,
+      .invite-sheet {
+        left: 50% !important;
+        right: auto !important;
+        width: min(560px, calc(100% - 80px)) !important;
+        max-width: calc(100% - 80px) !important;
+        max-height: calc(100% - 24px) !important;
+        height: auto !important;
+        bottom: var(--invite-bottom, max(12px, env(safe-area-inset-bottom, 0px)));
+        margin: 0 !important;
+        padding-bottom: 16px !important;
+        overflow: auto;
+        border-radius: 36px !important;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+        transform: translateX(-50%) !important;
+      }
+      .invite-sheet.step-form #inviteFormPanel {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch;
+        gap: 0;
+        padding: 0 !important;
+      }
+      .invite-sheet-header {
+        flex: none;
+        width: auto;
+        max-width: none;
+        text-align: center;
+        align-items: center;
+        padding: 0 24px;
+        gap: 6px;
+      }
+      .invite-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px 24px 8px !important;
+        min-width: 0;
+      }
+      .invite-email-field {
+        min-height: 44px;
+        padding: 10px 14px;
+      }
+      .invite-roles {
+        flex-direction: column;
+        gap: 0;
+        width: 100%;
+      }
+      .invite-primary-btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        padding: 10px 24px;
+        font-size: 17px;
+      }
+      .invite-success {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+        padding: 8px 24px 16px;
+      }
+      .invite-success-art {
+        width: 96px;
+        height: 96px;
+      }
+      .canvas-tools {
+        left: auto !important;
+        /* 12 edge + 56 side menu + 12 gap, plus island safe area */
+        right: calc(80px + env(safe-area-inset-right, 0px)) !important;
+        top: auto !important;
+        bottom: 20px !important;
+      }
+    }
+
+    html.landscape .app,
+    .phone.landscape .app,
+    .app.landscape {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /*
+     * Same landscape metrics for commenting chrome + invite sheet.
+     * Phone is 956×440; top bar and sheets share that full width.
+     */
+    html.landscape .invite-overlay,
+    body.landscape .invite-overlay,
+    .phone.landscape .invite-overlay,
+    .app.landscape .invite-overlay {
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    html.landscape #inviteSheet,
+    html.landscape .invite-sheet,
+    body.landscape #inviteSheet,
+    .phone.landscape #inviteSheet,
+    .phone.landscape .invite-sheet,
+    .app.landscape #inviteSheet {
+      left: 50% !important;
+      right: auto !important;
+      width: 560px !important;
+      max-width: calc(100% - 80px) !important;
+      min-width: 0 !important;
+      height: auto !important;
+      max-height: calc(100% - 24px) !important;
+      bottom: var(--invite-bottom, 12px);
+      top: auto !important;
+      margin: 0 !important;
+      padding-bottom: 16px !important;
+      overflow: auto;
+      border-radius: 36px !important;
+      transform: translateX(-50%) !important;
+      box-sizing: border-box;
+    }
+    html.landscape .commenting-top .glass-circle,
+    body.landscape .commenting-top .glass-circle,
+    .phone.landscape .commenting-top .glass-circle,
+    html.landscape #commentingTop .glass-circle,
+    html.landscape #backBtn,
+    html.landscape #eyeBtn,
+    .phone.landscape #backBtn,
+    .phone.landscape #eyeBtn {
+      width: 56px !important;
+      height: 56px !important;
+      min-width: 56px !important;
+      min-height: 56px !important;
+    }
+    html.landscape .invite-close,
+    html.landscape .invite-back,
+    .phone.landscape .invite-close,
+    .phone.landscape .invite-back {
+      width: 44px !important;
+      height: 44px !important;
+    }
+
+    /* iOS landscape toast: centered horizontally.
+       Editing: sit above catalogue / undo.
+       Commenting (option 1 eye): no rooms bar — pin to the bottom. */
+    html.landscape .toast,
+    body.landscape .toast,
+    .phone.landscape .toast,
+    .app.landscape .toast {
+      left: 50% !important;
+      right: auto !important;
+      width: min(400px, calc(100% - 32px)) !important;
+      max-width: 400px !important;
+      bottom: 124px !important;
+      top: auto !important;
+      transform: translateX(-50%) !important;
+      z-index: 50;
+    }
+    html.landscape .app.commenting .toast,
+    body.landscape .app.commenting .toast,
+    .phone.landscape .app.commenting .toast,
+    .app.landscape.commenting .toast {
+      bottom: 21px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="phone">
+      <div class="app" id="app">
+        <div class="grid-bg"></div>
+
+        <div class="status-bar" aria-hidden="true">
+          <img src="./assets/status-bar-ios.png" alt="" width="402" height="62" />
+        </div>
+
+        <div class="landscape-island" aria-hidden="true"></div>
+
+        <div class="content" id="content">
+          <div class="canvas-hit" id="canvasHit"></div>
+
+          <div class="room-group">
+            <div class="room-floor"></div>
+            <div class="sofa"><img src="./assets/sofa.png" alt="" /></div>
+          </div>
+
+          <div id="pins"></div>
+        </div>
+
+        <!-- Editing chrome (exact Figma positions) -->
+        <button class="btn-close liquid-glass" id="closeBtn" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+
+        <div class="ask-bar liquid-glass">
+          <i data-lucide="sparkles"></i>
+          <span>Ask anything</span>
+        </div>
+
+        <div class="commenting-top" id="commentingTop">
+          <button class="glass-circle liquid-glass" id="backBtn" aria-label="Back">
+            <i data-lucide="chevron-left"></i>
+          </button>
+          <div class="comment-pill liquid-glass">
+            <img src="./assets/icon-comment.svg?v=4" alt="" width="18" height="18" />
+            <span id="commentPillLabel">Tap to leave a comment</span>
+          </div>
+          <button class="glass-circle liquid-glass" id="eyeBtn" aria-label="Toggle visibility">
+            <i data-lucide="eye" id="eyeIcon"></i>
+          </button>
+        </div>
+
+        <div class="side-stack">
+          <!-- Figma 63:5646 menu -->
+          <div class="side-menu liquid-glass">
+            <div class="side-menu-items">
+              <button class="side-item btn-3d" type="button">3D</button>
+              <button class="side-item" type="button" title="Share">
+                <img src="./assets/icon-share.svg?v=4" alt="" width="24" height="24" />
+              </button>
+              <button class="side-item" type="button" title="Camera">
+                <img src="./assets/icon-camera.svg?v=4" alt="" width="24" height="24" />
+              </button>
+              <button class="side-item" type="button" title="Layers">
+                <img src="./assets/icon-layers.svg?v=4" alt="" width="24" height="24" />
+              </button>
+              <button class="side-item" id="commentsBtn" type="button" title="Comments">
+                <img src="./assets/icon-comment.svg?v=4" alt="" width="24" height="24" />
+              </button>
+              <button class="side-item" id="moreBtn" type="button" title="More" aria-haspopup="true" aria-expanded="false">
+                <img class="icon-more" src="./assets/icon-more.svg" alt="" width="24" height="24" />
+              </button>
+            </div>
+            <span class="badge" id="badge">1</span>
+          </div>
+          <button class="wand-btn liquid-glass" type="button" title="Magic">
+            <img src="./assets/icon-wand.svg" alt="" width="24" height="24" />
+          </button>
+        </div>
+
+        <!-- Figma 132:21711 Home Screen Quick Actions Menu -->
+        <div class="more-menu" id="moreMenu" role="menu" hidden>
+          <button type="button" role="menuitem">
+            <span>Ruler</span>
+            <i data-lucide="ruler"></i>
+          </button>
+          <button type="button" role="menuitem">
+            <span>Share</span>
+            <img src="./assets/icon-share.svg?v=4" alt="" width="22" height="22" />
+          </button>
+          <button type="button" role="menuitem">
+            <span>Collaborate</span>
+            <i data-lucide="users"></i>
+          </button>
+          <button type="button" role="menuitem">
+            <span>Export to CAD</span>
+            <i data-lucide="file-up"></i>
+          </button>
+          <button type="button" role="menuitem">
+            <span>Notes</span>
+            <i data-lucide="notebook-text"></i>
+          </button>
+          <button type="button" role="menuitem" id="moreHideCommentsBtn" class="hidden">
+            <span id="moreHideCommentsLabel">Hide comments</span>
+            <i data-lucide="eye-off" id="moreHideCommentsIcon"></i>
+          </button>
+          <button type="button" role="menuitem" id="moreSettingsBtn">
+            <span>Settings</span>
+            <i data-lucide="settings"></i>
+          </button>
+        </div>
+
+        <div class="canvas-tools">
+          <div class="proto-settings" id="protoSettings">
+            <button class="proto-settings-btn liquid-glass" id="protoSettingsBtn" type="button" aria-label="Prototype settings" aria-expanded="false" aria-haspopup="true">
+              <i data-lucide="sliders-horizontal"></i>
+            </button>
+            <div class="proto-settings-menu liquid-glass" id="protoSettingsMenu" role="menu">
+              <button type="button" role="menuitem" data-orientation="portrait">Portrait</button>
+              <button type="button" role="menuitem" data-orientation="landscape">Landscape</button>
+              <div class="proto-settings-sep" role="separator"></div>
+              <p class="proto-settings-hint">Hide comments via</p>
+              <button type="button" role="menuitem" data-proto-option="1">1 · Eye button</button>
+              <button type="button" role="menuitem" data-proto-option="2">2 · Settings toggle</button>
+              <button type="button" role="menuitem" data-proto-option="3">3 · More menu</button>
+            </div>
+          </div>
+          <div class="activity-avatars liquid-glass" aria-hidden="true">
+            <span class="av" style="background:#016ae1">A</span>
+            <span class="av" style="background:#26a954">B</span>
+            <span class="av" style="background:#9d58cf">C</span>
+          </div>
+          <div class="undo-menu liquid-glass">
+            <button type="button" aria-label="Undo"><i data-lucide="undo-2"></i></button>
+            <button type="button" aria-label="Redo"><i data-lucide="redo-2"></i></button>
+          </div>
+        </div>
+
+        <div class="catalogue liquid-glass">
+          <div class="catalogue-handle"></div>
+          <div class="tabs">
+            <button class="tab" type="button">
+              <span class="ico"><img src="./assets/icon-rooms.svg" alt="" width="24" height="24" /></span>
+              Rooms
+            </button>
+            <button class="tab" type="button">
+              <span class="ico"><img src="./assets/icon-construction.svg" alt="" width="24" height="24" /></span>
+              Construction
+            </button>
+            <button class="tab" type="button">
+              <span class="ico"><img src="./assets/icon-interior.svg" alt="" width="24" height="24" /></span>
+              Interior
+            </button>
+            <button class="tab" type="button">
+              <span class="ico"><img src="./assets/icon-exterior.svg" alt="" width="24" height="24" /></span>
+              Exterior
+            </button>
+            <button class="tab" type="button">
+              <span class="ico"><img src="./assets/icon-search.svg" alt="" width="24" height="24" /></span>
+              Search
+            </button>
+          </div>
+        </div>
+
+        <div class="toast" id="toast">
+          <div>Comments are hidden from the editing canvas. Now you can only view them in commenting mode.</div>
+          <button id="toastClose" aria-label="Dismiss"><i data-lucide="x"></i></button>
+        </div>
+
+        <div class="sheet" id="sheet">
+          <div class="sheet-handle"></div>
+          <div class="messages" id="messages"></div>
+          <div class="invite-picker" id="invitePicker">
+            <button type="button" class="invite-header" id="inviteHeaderBtn">
+              <img src="./assets/icon-user-plus.svg" alt="" width="24" height="24" />
+              <span>Invite to collaborate</span>
+            </button>
+            <div id="inviteList"></div>
+          </div>
+          <div class="reply-bar">
+            <div class="reply-composer">
+              <div class="reply-highlight" id="replyHighlight"><span class="ph">Leave a reply</span></div>
+              <input id="replyInput" type="text" placeholder="Leave a reply" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="reply-actions">
+              <button class="at-btn" id="atBtn" type="button" aria-label="Invite or mention"><i data-lucide="at-sign"></i></button>
+              <button class="send-btn hidden" id="sendBtn" type="button" aria-label="Send"><img src="./assets/icon-send-fill.svg" alt="" width="14" height="16" /></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Figma 121:12397 invite by email → 121:12484 success -->
+        <div class="invite-overlay" id="inviteOverlay" aria-hidden="true">
+          <div class="invite-sheet step-form" id="inviteSheet" role="dialog" aria-labelledby="inviteSheetTitle">
+            <div class="drag"></div>
+            <div class="invite-sheet-top">
+              <button type="button" class="invite-back" id="inviteSheetBack" aria-label="Back">
+                <i data-lucide="chevron-left"></i>
+              </button>
+              <button type="button" class="invite-close" id="inviteSheetClose" aria-label="Close">
+                <img src="./assets/icon-invite-close.svg?v=2" alt="" width="24" height="24" />
+              </button>
+            </div>
+
+            <div class="invite-panel" id="inviteFormPanel">
+              <div class="invite-sheet-header">
+                <h2 id="inviteSheetTitle">Invite to collaborate</h2>
+                <p>Invite collaborators to view, provide feedback, or edit the project in real-time</p>
+              </div>
+              <div class="invite-form">
+                <label class="invite-email-field" for="inviteEmailInput">
+                  <img src="./assets/icon-invite-email.svg" alt="" width="24" height="24" />
+                  <input
+                    id="inviteEmailInput"
+                    type="email"
+                    inputmode="email"
+                    autocomplete="email"
+                    placeholder="Email address"
+                    spellcheck="false"
+                  />
+                </label>
+                <div class="invite-roles" role="radiogroup" aria-label="Access role">
+                  <button type="button" class="invite-role" data-role="viewer" role="radio" aria-checked="true">
+                    <span class="invite-role-radio" aria-hidden="true">
+                      <img class="off" src="./assets/icon-radio-off.svg" alt="" width="20" height="20" />
+                      <img class="on" src="./assets/icon-radio-on-box.svg" alt="" width="20" height="20" />
+                      <img class="dot" src="./assets/icon-radio-dot.svg" alt="" width="8" height="8" />
+                    </span>
+                    <span class="invite-role-label">Viewer</span>
+                  </button>
+                  <button type="button" class="invite-role" data-role="editor" role="radio" aria-checked="false">
+                    <span class="invite-role-radio" aria-hidden="true">
+                      <img class="off" src="./assets/icon-radio-off.svg" alt="" width="20" height="20" />
+                      <img class="on" src="./assets/icon-radio-on-box.svg" alt="" width="20" height="20" />
+                      <img class="dot" src="./assets/icon-radio-dot.svg" alt="" width="8" height="8" />
+                    </span>
+                    <span class="invite-role-label">Editor</span>
+                  </button>
+                </div>
+                <button type="button" class="invite-primary-btn" id="sendInviteBtn" disabled>Send Invite</button>
+              </div>
+            </div>
+
+            <div class="invite-panel" id="inviteSuccessPanel">
+              <div class="invite-success">
+                <img class="invite-success-art" src="./assets/invite-email-sent.svg" alt="" width="156" height="156" />
+                <div>
+                  <h2>Invitation sent</h2>
+                  <p>
+                    We’ve emailed <strong id="inviteSuccessEmail">email@gmail.com</strong>.
+                    They’ll get access once they accept the invitation.
+                  </p>
+                </div>
+                <button type="button" class="invite-primary-btn" id="inviteContinueBtn">Continue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Figma 132:21712 Settings sheet (More → …) -->
+        <div class="settings-overlay" id="settingsOverlay" aria-hidden="true">
+          <div class="settings-sheet" id="settingsSheet" role="dialog" aria-labelledby="settingsTitle">
+            <div class="settings-drag" aria-hidden="true"></div>
+            <div class="settings-toolbar">
+              <button type="button" class="settings-icon-btn" id="settingsCloseBtn" aria-label="Close">
+                <i data-lucide="x"></i>
+              </button>
+              <h2 id="settingsTitle">Settings</h2>
+              <button type="button" class="settings-icon-btn settings-check" id="settingsDoneBtn" aria-label="Done">
+                <i data-lucide="check"></i>
+              </button>
+            </div>
+            <div class="settings-body">
+              <div class="settings-row">
+                <span class="settings-label">Project name</span>
+                <span class="settings-value">New Project 2 copy</span>
+                <i data-lucide="chevron-right" class="settings-chevron green"></i>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">Appearance</span>
+                <span class="settings-value">System</span>
+                <i data-lucide="chevrons-up-down" class="settings-chevron"></i>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">Measurements</span>
+                <span class="settings-value">M, cm</span>
+                <i data-lucide="chevrons-up-down" class="settings-chevron"></i>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">Show measurements</span>
+                <button type="button" class="ios-toggle on" data-settings-toggle="measurements" aria-pressed="true" aria-label="Show measurements"></button>
+              </div>
+              <div class="settings-row stacked">
+                <div class="settings-copy">
+                  <span class="settings-label">Objects</span>
+                  <span class="settings-hint">Show objects on floor plan</span>
+                </div>
+                <button type="button" class="ios-toggle on" data-settings-toggle="objects" aria-pressed="true" aria-label="Show objects"></button>
+              </div>
+              <div class="settings-row stacked">
+                <div class="settings-copy">
+                  <span class="settings-label">Show comments</span>
+                  <span class="settings-hint">Show comments on the canvas</span>
+                </div>
+                <button type="button" class="ios-toggle on" id="settingsCommentsToggle" data-settings-toggle="comments" aria-pressed="true" aria-label="Show comments"></button>
+              </div>
+              <div class="settings-row stacked">
+                <div class="settings-copy">
+                  <span class="settings-label">Lock walls</span>
+                  <span class="settings-hint">Prevents accidental wall movement</span>
+                </div>
+                <button type="button" class="ios-toggle" data-settings-toggle="lockWalls" aria-pressed="false" aria-label="Lock walls"></button>
+              </div>
+              <div class="settings-row stacked">
+                <div class="settings-copy">
+                  <span class="settings-label">Snapping</span>
+                  <span class="settings-hint">Snap objects to each other</span>
+                </div>
+                <button type="button" class="ios-toggle on" data-settings-toggle="snapping" aria-pressed="true" aria-label="Snapping"></button>
+              </div>
+              <div class="settings-section">Background</div>
+              <div class="settings-colors" id="settingsColors">
+                <button type="button" class="settings-swatch selected" data-bg="grid" aria-label="Grid"></button>
+                <button type="button" class="settings-swatch sky" data-bg="sky" aria-label="Sky"></button>
+                <button type="button" class="settings-swatch rock" data-bg="rock" aria-label="Rock"></button>
+                <button type="button" class="settings-swatch sand" data-bg="sand" aria-label="Sand"></button>
+                <button type="button" class="settings-swatch grass" data-bg="grass" aria-label="Grass"></button>
+                <button type="button" class="settings-swatch field" data-bg="field" aria-label="Field"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="install-tip" id="installTip" role="status">
+    <span>Fullscreen: Share → <strong>Add to Home Screen</strong><br />Полный экран: Поделиться → <strong>На экран «Домой»</strong></span>
+    <button type="button" id="installTipClose" aria-label="Dismiss">OK</button>
+  </div>
+
+  <script>
+    const authors = {
+      olya: { username: "olya.wo", initial: "O", color: "#016ae1" },
+      mira: { username: "mira.s", initial: "M", color: "#f2bf33" },
+    };
+
+    const collaborators = [
+      { id: "c1", name: "Maria Ra", email: "myravchik@gmail.com", initial: "M", color: "#016ae1", handle: "@Maria_Ra" },
+      { id: "c2", name: "Daria Sorokina", email: null, initial: "D", color: "#71b513", handle: "@Daria_Sorokina" },
+      { id: "c3", name: "Kieran Shepherd", email: "nixa_lazuxo54@hotmail.com", initial: "F", color: "#9d58cf", handle: "@Kieran_Shepherd" },
+    ];
+
+    const state = {
+      mode: "editing",
+      commentsVisibleOnCanvas: true,
+      selectedThreadId: null,
+      showToast: false,
+      showInvitePicker: false,
+      showInviteSheet: false,
+      inviteSheetStep: "form", // form | success
+      inviteEmail: "",
+      inviteRole: "viewer", // viewer | editor
+      invitedEmails: [], // emails invited via Invite sheet — shown in @ picker
+      showProtoSettings: false,
+      protoOption: Number(localStorage.getItem("comnts-proto-option") || 1) || 1,
+      showMoreMenu: false,
+      showSettingsSheet: false,
+      orientation: "portrait", // portrait | landscape
+      threads: [
+        {
+          id: "t1",
+          x: 283, y: 348,
+          unread: true,
+          messages: [{ id: "m1", author: "olya", text: "Add a sofa here", time: "Today 2:09 PM" }],
+        },
+        {
+          id: "t2",
+          x: 126, y: 258,
+          unread: false,
+          messages: [{ id: "m2", author: "olya", text: "Check the rug size", time: "Today 1:20 PM" }],
+        },
+        {
+          id: "t3",
+          x: 106, y: 423,
+          unread: true,
+          messages: [{ id: "m3", author: "mira", text: "Looks good from this angle", time: "Today 12:05 PM" }],
+        },
+      ],
+    };
+
+    let toastTimer = null;
+    const $ = (id) => document.getElementById(id);
+
+    function unreadCount() {
+      return state.threads.filter((t) => t.unread && t.messages.length > 0).length;
+    }
+
+    function shouldShowPins() {
+      return state.mode === "commenting" || state.commentsVisibleOnCanvas;
+    }
+
+    function pinLabel(thread) {
+      if (thread.messages.length <= 1) {
+        return thread.messages[0]
+          ? authors[thread.messages[0].author].initial
+          : "O";
+      }
+      return String(thread.messages.length);
+    }
+
+    function pinAvatarColor(thread) {
+      if (thread.messages.length > 1) return "#26262e";
+      const msg = thread.messages[0];
+      if (!msg) return authors.olya.color;
+      return authors[msg.author].color;
+    }
+
+    function pinTipSrc(thread) {
+      // Read = white tip (matches white shell); unread = blue tip
+      if (thread.unread) return "./assets/bubble.svg";
+      return "./assets/bubble-tip-white.svg";
+    }
+
+    function renderPins() {
+      const root = $("pins");
+      root.innerHTML = "";
+      if (!shouldShowPins()) return;
+
+      state.threads.forEach((thread) => {
+        const btn = document.createElement("button");
+        const readClass = thread.unread ? "unread" : "read";
+        btn.className =
+          "pin " +
+          readClass +
+          (thread.messages.length > 1 ? " count" : "") +
+          (thread.id === state.selectedThreadId ? " selected" : "");
+        btn.dataset.id = thread.id;
+        btn.title = thread.unread ? "Unread comment" : "Read comment";
+        if (isLandscapeNow()) {
+          const contentEl = $("content");
+          const room = document.querySelector(".room-group");
+          if (isRealMobile() && contentEl && room) {
+            const content = contentEl.getBoundingClientRect();
+            const rr = room.getBoundingClientRect();
+            const pw = 234.615;
+            const ph = 230;
+            btn.style.left =
+              rr.left - content.left + (thread.x - 84) * (rr.width / pw) + "px";
+            btn.style.top =
+              rr.top - content.top + (thread.y - 291) * (rr.height / ph) + "px";
+          } else {
+            btn.style.left = 328 + (thread.x - 84) * (301 / 234.615) + "px";
+            btn.style.top = 69 + (thread.y - 291) * (301 / 230) + "px";
+          }
+        } else {
+          btn.style.left = thread.x + "px";
+          btn.style.top = thread.y + "px";
+        }
+        btn.innerHTML = `
+          <span class="pin-visual">
+            <span class="pin-bubble">
+              <span class="pin-tip"><img src="${pinTipSrc(thread)}" alt="" /></span>
+            </span>
+            <span class="pin-avatar" style="background:${pinAvatarColor(thread)}">${pinLabel(thread)}</span>
+          </span>
+        `;
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openThread(thread.id);
+        });
+        root.appendChild(btn);
+      });
+    }
+
+    function renderChrome() {
+      const sheetOpen = !!state.selectedThreadId;
+      // Top bar only in commenting mode, and never while a thread sheet is open
+      const showCommentTop = state.mode === "commenting" && !sheetOpen;
+
+      $("app").classList.toggle("commenting", state.mode === "commenting");
+      $("app").classList.toggle("sheet-open", sheetOpen);
+
+      const topBar = $("commentingTop");
+      topBar.style.display = showCommentTop ? "flex" : "none";
+      topBar.setAttribute("aria-hidden", showCommentTop ? "false" : "true");
+
+      const count = unreadCount();
+      // Badge stays on the side menu even when pins are hidden on canvas
+      const showBadge =
+        state.mode === "editing" &&
+        !sheetOpen &&
+        count > 0;
+      $("badge").classList.toggle("hidden", !showBadge);
+      $("badge").textContent = String(Math.min(count, 9));
+
+      $("commentPillLabel").textContent = "Tap to leave a comment";
+
+      $("eyeBtn").innerHTML = state.commentsVisibleOnCanvas
+        ? '<i data-lucide="eye"></i>'
+        : '<i data-lucide="eye-off"></i>';
+      $("eyeBtn").classList.toggle("eye-hidden", !state.commentsVisibleOnCanvas);
+      $("eyeBtn").classList.toggle("hidden", state.protoOption !== 1);
+      $("commentingTop").classList.toggle("no-eye", state.protoOption !== 1);
+      $("eyeBtn").setAttribute(
+        "aria-label",
+        state.commentsVisibleOnCanvas ? "Hide comments" : "Show comments"
+      );
+      $("toast").classList.toggle("show", state.showToast);
+      renderProtoSettings();
+      renderMoreMenu();
+      renderSettingsSheet();
+      refreshIcons();
+    }
+
+    function renderProtoSettings() {
+      const wrap = $("protoSettings");
+      const btn = $("protoSettingsBtn");
+      const open = !!state.showProtoSettings;
+      wrap.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      wrap.querySelectorAll("[data-proto-option]").forEach((el) => {
+        const n = Number(el.getAttribute("data-proto-option"));
+        el.classList.toggle("selected", state.protoOption === n);
+      });
+      wrap.querySelectorAll("[data-orientation]").forEach((el) => {
+        el.classList.toggle("selected", el.getAttribute("data-orientation") === state.orientation);
+      });
+    }
+
+    function renderSettingsSheet() {
+      const open = !!state.showSettingsSheet;
+      const overlay = $("settingsOverlay");
+      overlay.classList.toggle("open", open);
+      overlay.setAttribute("aria-hidden", open ? "false" : "true");
+      $("app").classList.toggle("settings-open", open);
+      const commentsOn = !!state.commentsVisibleOnCanvas;
+      const toggle = $("settingsCommentsToggle");
+      toggle.classList.toggle("on", commentsOn);
+      toggle.setAttribute("aria-pressed", commentsOn ? "true" : "false");
+      refreshIcons();
+    }
+
+    function renderMoreMenu() {
+      const option = state.protoOption;
+      const open =
+        !!state.showMoreMenu &&
+        (option === 2 || option === 3) &&
+        !state.showSettingsSheet;
+      const menu = $("moreMenu");
+      const btn = $("moreBtn");
+      const hideBtn = $("moreHideCommentsBtn");
+      const hideLabel = $("moreHideCommentsLabel");
+      const hideIcon = $("moreHideCommentsIcon");
+      const commentsOn = !!state.commentsVisibleOnCanvas;
+      menu.classList.toggle("open", open);
+      menu.classList.toggle("option-3", option === 3);
+      menu.hidden = !open;
+      btn.classList.toggle("more-active", open);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      hideBtn.classList.toggle("hidden", option !== 3);
+      if (option === 3) {
+        hideLabel.textContent = commentsOn ? "Hide comments" : "Show comments";
+        hideIcon.setAttribute("data-lucide", commentsOn ? "eye-off" : "eye");
+      }
+      if (open) refreshIcons();
+    }
+
+    function openSettingsSheet() {
+      state.showSettingsSheet = true;
+      state.showMoreMenu = false;
+      state.showProtoSettings = false;
+      renderMoreMenu();
+      renderSettingsSheet();
+      renderProtoSettings();
+    }
+
+    function closeSettingsSheet() {
+      state.showSettingsSheet = false;
+      renderSettingsSheet();
+    }
+
+    function applyOrientation(next) {
+      const normalized = next === "landscape" ? "landscape" : "portrait";
+      const on = normalized === "landscape";
+      const changed = state.orientation !== normalized;
+      state.orientation = normalized;
+      document.documentElement.classList.toggle("landscape", on);
+      document.body.classList.toggle("landscape", on);
+      const phone = document.querySelector(".phone");
+      const app = $("app");
+      if (phone) phone.classList.toggle("landscape", on);
+      if (app) app.classList.toggle("landscape", on);
+      // Only re-layout pins when orientation actually changed (stops flicker)
+      if (changed) {
+        renderPins();
+        renderProtoSettings();
+      }
+      syncComposerToKeyboard();
+    }
+
+    /**
+     * Landscape detection. Prefer matchMedia / screen.orientation / window.orientation.
+     * Geometry (width>height) only when allowGeometry=true — needed right after physical
+     * rotate when iOS APIs lag, but avoid during keyboard (aspect flips wrongly).
+     */
+    function deviceIsLandscape(allowGeometry) {
+      try {
+        if (window.matchMedia("(orientation: landscape)").matches) return true;
+        if (window.matchMedia("(orientation: portrait)").matches) return false;
+      } catch (_) {}
+      const so = window.screen && window.screen.orientation && window.screen.orientation.type;
+      if (so) {
+        if (String(so).startsWith("landscape")) return true;
+        if (String(so).startsWith("portrait")) return false;
+      }
+      const o = window.orientation;
+      if (o === 90 || o === -90) return true;
+      if (o === 0 || o === 180) return false;
+      if (allowGeometry) {
+        return window.innerWidth > window.innerHeight;
+      }
+      return false;
+    }
+
+    let lockedAppHeight = 0;
+    let composerFocused = false;
+    let orientTimer = 0;
+    let lastOrientApplied = "";
+    let lastAspect = 0;
+    let rotateRetryTimers = [];
+
+    function syncAppHeight() {
+      // Shell is CSS 100% — only track height for keyboard math
+      if (composerFocused) {
+        if (lockedAppHeight <= 0) {
+          lockedAppHeight = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+        }
+        return;
+      }
+      const h = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+      if (h > 0) lockedAppHeight = h;
+    }
+
+    function syncDeviceOrientation() {
+      if (!isRealMobile()) {
+        syncAppHeight();
+        return;
+      }
+      // Keyboard open → never flip layout (kb resize was causing flicker)
+      if (composerFocused) {
+        syncComposerToKeyboard();
+        return;
+      }
+      syncAppHeight();
+      const land = deviceIsLandscape(true);
+      const next = land ? "landscape" : "portrait";
+      if (next === lastOrientApplied && document.documentElement.classList.contains("landscape") === land) {
+        syncComposerToKeyboard();
+        return;
+      }
+      lastOrientApplied = next;
+      applyOrientation(next);
+    }
+
+    /** Physical rotate — same path as Landscape button, with iOS timing retries. */
+    function onDeviceRotated() {
+      if (!isRealMobile()) {
+        syncAppHeight();
+        return;
+      }
+      lockedAppHeight = 0;
+      lastOrientApplied = "";
+      lastAspect = window.innerWidth / Math.max(1, window.innerHeight);
+      rotateRetryTimers.forEach(clearTimeout);
+      rotateRetryTimers = [];
+      const run = () => {
+        if (composerFocused) {
+          syncComposerToKeyboard();
+          return;
+        }
+        syncAppHeight();
+        const land = deviceIsLandscape(true);
+        const next = land ? "landscape" : "portrait";
+        lastOrientApplied = next;
+        applyOrientation(next);
+      };
+      run();
+      [100, 300, 600].forEach((ms) => {
+        rotateRetryTimers.push(setTimeout(run, ms));
+      });
+    }
+
+    /** Debounce orientation — iOS fires many resize/orientation events in a row */
+    function scheduleOrientationSync(delay) {
+      clearTimeout(orientTimer);
+      orientTimer = setTimeout(syncDeviceOrientation, delay == null ? 120 : delay);
+    }
+
+    function isRealMobile() {
+      return (
+        window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "")
+      );
+    }
+
+    function isLandscapeNow() {
+      if (isRealMobile()) return deviceIsLandscape(true);
+      return document.documentElement.classList.contains("landscape");
+    }
+
+    function keyboardOcclusion() {
+      if (!window.visualViewport) return 0;
+      const vv = window.visualViewport;
+      const layoutH =
+        lockedAppHeight > 0
+          ? lockedAppHeight
+          : Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+      return Math.max(0, Math.round(layoutH - vv.height - vv.offsetTop));
+    }
+
+    /** Pin composer / invite sheet just above the software keyboard. */
+    function syncComposerToKeyboard() {
+      if (!isRealMobile() || !window.visualViewport) {
+        document.documentElement.style.removeProperty("--sheet-bottom");
+        document.documentElement.style.removeProperty("--invite-bottom");
+        return;
+      }
+      const occluded = keyboardOcclusion();
+      const sheet = $("sheet");
+      const overlay = $("inviteOverlay");
+      const inviteFocused =
+        document.activeElement && document.activeElement.id === "inviteEmailInput";
+      const wantLift = (composerFocused || inviteFocused) && occluded > 24;
+
+      if (wantLift) {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+
+      if (sheet && sheet.classList.contains("open") && wantLift) {
+        document.documentElement.style.setProperty("--sheet-bottom", occluded + "px");
+      } else if (!wantLift) {
+        document.documentElement.style.removeProperty("--sheet-bottom");
+      }
+
+      if (overlay && overlay.classList.contains("open") && wantLift) {
+        document.documentElement.style.setProperty("--invite-bottom", occluded + 12 + "px");
+      } else if (!wantLift) {
+        document.documentElement.style.removeProperty("--invite-bottom");
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function formatMessageText(text) {
+      return escapeHtml(text).replace(
+        /@([^\s@]+@[^\s@]+\.[^\s@]+|[A-Za-z0-9_]+)/g,
+        '<span style="color:#0177de">@$1</span>'
+      );
+    }
+
+    function knownHandles() {
+      const people = collaborators.map((c) => c.handle.toLowerCase());
+      const emails = (state.invitedEmails || []).map((e) => ("@" + e).toLowerCase());
+      return people.concat(emails);
+    }
+
+    function isBlueMention(token) {
+      if (!token.startsWith("@")) return false;
+      if (knownHandles().includes(token.toLowerCase())) return true;
+      const body = token.slice(1);
+      return isValidInviteEmail(body);
+    }
+
+    /** Blue completed mentions in the composer (Figma 82:7451 / 121:12440). */
+    function formatComposerHighlight(text, placeholder) {
+      if (!text) {
+        return `<span class="ph">${escapeHtml(placeholder)}</span>`;
+      }
+      return text
+        .split(/(@[^\s@]+@[^\s@]+\.[^\s@]+|@[A-Za-z0-9_]+)/g)
+        .map((part) => {
+          if (isBlueMention(part)) {
+            return `<span class="mention">${escapeHtml(part)}</span>`;
+          }
+          return escapeHtml(part);
+        })
+        .join("");
+    }
+
+    function updateComposerHighlight() {
+      const input = $("replyInput");
+      if (!input || !$("replyHighlight")) return;
+      const thread = state.threads.find((t) => t.id === state.selectedThreadId);
+      let placeholder = "Leave a reply";
+      if (state.showInvitePicker) placeholder = "@ example@gmail.com";
+      else if (thread && thread.messages.length === 0) placeholder = "Leave a comment";
+      $("replyHighlight").innerHTML = formatComposerHighlight(input.value, placeholder);
+      input.placeholder = placeholder;
+    }
+
+    function activeMentionQuery() {
+      const v = $("replyInput").value;
+      // Incomplete token after last @: stop at whitespace (emails contain @)
+      const m = v.match(/(?:^|[\s,])@([^\s]*)$/);
+      if (!m) return null;
+      // Completed email mention already ends the token — don't keep picker open on it alone
+      if (isValidInviteEmail(m[1])) return null;
+      return m[1].toLowerCase();
+    }
+
+    function invitedEmailEntries() {
+      return (state.invitedEmails || []).map((email) => {
+        const e = String(email).trim();
+        return {
+          id: "email:" + e.toLowerCase(),
+          kind: "email",
+          name: e,
+          email: null,
+          initial: e.charAt(0).toUpperCase(),
+          color: null,
+          handle: "@" + e,
+        };
+      });
+    }
+
+    function filteredPickerEntries() {
+      const q = activeMentionQuery();
+      const people = collaborators.map((c) => ({ ...c, kind: "person" }));
+      const emails = invitedEmailEntries();
+      const all = people.concat(emails);
+      if (q === null || q === "") return all;
+      return all.filter((c) => {
+        const name = (c.name || "").toLowerCase().replace(/\s+/g, "_");
+        const handle = (c.handle || "").toLowerCase().replace(/^@/, "");
+        const email = (c.email || c.name || "").toLowerCase();
+        return name.includes(q) || handle.includes(q) || email.includes(q);
+      });
+    }
+
+    function renderInvitePicker() {
+      // Email invite sheet is a modal — never keep the @ picker open under it.
+      if (state.showInviteSheet) {
+        state.showInvitePicker = false;
+        $("invitePicker").classList.remove("open");
+        $("sheet").classList.remove("invite-open");
+        return;
+      }
+
+      // Open only while an incomplete `@…` token is active, or user just tapped @
+      const queryActive = activeMentionQuery() !== null;
+      const open = !!state.selectedThreadId && queryActive;
+
+      // If opened via @ button with bare "@", queryActive is true (empty string after @)
+      // Keep explicit flag only as a one-shot until selection / blur of mention
+      if (!queryActive) {
+        state.showInvitePicker = false;
+      } else {
+        state.showInvitePicker = true;
+      }
+
+      $("invitePicker").classList.toggle("open", open);
+      $("sheet").classList.toggle("invite-open", open);
+
+      const list = filteredPickerEntries();
+      $("inviteList").innerHTML = list.length
+        ? list
+            .map((c) => {
+              if (c.kind === "email") {
+                return `
+        <button type="button" class="invite-row" data-id="${escapeHtml(c.id)}">
+          <span class="av email-av">${escapeHtml(c.initial)}</span>
+          <span class="meta">
+            <span class="name">${escapeHtml(c.name)}</span>
+          </span>
+        </button>`;
+              }
+              return `
+        <button type="button" class="invite-row" data-id="${escapeHtml(c.id)}">
+          <span class="av" style="background:${c.color}">${escapeHtml(c.initial)}</span>
+          <span class="meta">
+            <span class="name">${escapeHtml(c.name)}</span>
+            ${c.email ? `<span class="email">${escapeHtml(c.email)}</span>` : ""}
+          </span>
+        </button>`;
+            })
+            .join("")
+        : `<div class="invite-header" style="cursor:default"><span>No matches</span></div>`;
+
+      $("inviteList").querySelectorAll(".invite-row").forEach((btn) => {
+        btn.addEventListener("click", () => insertMention(btn.dataset.id));
+      });
+      updateComposerHighlight();
+    }
+
+    function isValidInviteEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+    }
+
+    function renderInviteSheet() {
+      const open = !!state.showInviteSheet;
+      const step = state.inviteSheetStep === "success" ? "success" : "form";
+      const sheet = $("inviteSheet");
+      $("inviteOverlay").classList.toggle("open", open);
+      $("inviteOverlay").setAttribute("aria-hidden", open ? "false" : "true");
+      sheet.classList.toggle("step-form", step === "form");
+      sheet.classList.toggle("step-success", step === "success");
+
+      const email = String(state.inviteEmail || "").trim();
+      $("inviteEmailInput").value = state.inviteEmail;
+      $("sendInviteBtn").disabled = !isValidInviteEmail(email);
+      $("inviteSuccessEmail").textContent = email || "email@gmail.com";
+
+      sheet.querySelectorAll(".invite-role").forEach((btn) => {
+        const on = btn.getAttribute("data-role") === state.inviteRole;
+        btn.setAttribute("aria-checked", on ? "true" : "false");
+      });
+      refreshIcons();
+      syncComposerToKeyboard();
+    }
+
+    function openInviteSheet() {
+      state.showInviteSheet = true;
+      state.inviteSheetStep = "form";
+      state.inviteEmail = "";
+      state.inviteRole = "viewer";
+      state.showInvitePicker = false;
+      renderInvitePicker();
+      renderInviteSheet();
+      setTimeout(() => {
+        const input = $("inviteEmailInput");
+        if (input) input.focus({ preventScroll: true });
+      }, 180);
+    }
+
+    function closeInviteSheet() {
+      state.showInviteSheet = false;
+      state.inviteSheetStep = "form";
+      renderInviteSheet();
+    }
+
+    function finishInviteSuccess() {
+      const email = String(state.inviteEmail || "").trim();
+      if (email && isValidInviteEmail(email)) {
+        rememberInvitedEmail(email);
+        commitMention("@" + email);
+      }
+      closeInviteSheet();
+      const input = $("replyInput");
+      if (input && state.selectedThreadId) {
+        setTimeout(() => input.focus({ preventScroll: true }), 120);
+      }
+    }
+
+    function rememberInvitedEmail(email) {
+      const normalized = String(email || "").trim().toLowerCase();
+      if (!isValidInviteEmail(normalized)) return;
+      if (!state.invitedEmails.some((e) => e.toLowerCase() === normalized)) {
+        state.invitedEmails.push(String(email).trim());
+      }
+    }
+
+    function sendInvite() {
+      const email = String(state.inviteEmail || "").trim();
+      if (!isValidInviteEmail(email)) return;
+      state.inviteEmail = email;
+      rememberInvitedEmail(email);
+      state.inviteSheetStep = "success";
+      renderInviteSheet();
+    }
+
+    function toggleInvitePicker() {
+      const input = $("replyInput");
+      const v = input.value;
+      if (/@\S*$/.test(v) || /@$/.test(v)) {
+        state.showInvitePicker = true;
+      } else if (!v.trim()) {
+        input.value = "@";
+        state.showInvitePicker = true;
+      } else {
+        input.value = v + (v.endsWith(" ") ? "@" : " @");
+        state.showInvitePicker = true;
+      }
+      renderInvitePicker();
+      updateSendButton();
+      input.focus();
+    }
+
+    /** Put `@email` or `@Handle` in the composer, drop leftover @ tokens, close the picker. */
+    function commitMention(handle) {
+      const input = $("replyInput");
+      if (!input || !handle) return;
+      const mention = String(handle).replace(/^@+/, "@");
+      let v = String(input.value || "");
+
+      if (/(?:^|[\s,])@+[^\s]*$/.test(v)) {
+        v = v.replace(/(?:^|[\s,])@+[^\s]*$/, (chunk) => {
+          const lead = /^[\s,]/.test(chunk) ? chunk.charAt(0) : "";
+          return lead + mention;
+        });
+      } else if (!v.trim()) {
+        v = mention;
+      } else if (!v.includes(mention)) {
+        v = v.replace(/\s+$/, "") + " " + mention;
+      }
+
+      v = v.replace(/@{2,}/g, "@");
+      v = v.replace(/(@[^\s@]+@[^\s@]+\.[^\s@]+)@+/g, "$1");
+      v = v.replace(/\s+@+\s*$/, "");
+      v = v.replace(/\s+$/, "") + " ";
+
+      input.value = v;
+      state.showInvitePicker = false;
+      renderInvitePicker();
+      updateSendButton();
+      updateComposerHighlight();
+    }
+
+    function insertMention(id) {
+      let handle = null;
+      if (String(id).startsWith("email:")) {
+        const email = String(id).slice("email:".length);
+        handle = "@" + email;
+      } else {
+        const person = collaborators.find((c) => c.id === id);
+        if (person) handle = person.handle;
+      }
+      if (!handle) return;
+      commitMention(handle);
+      $("replyInput").focus({ preventScroll: true });
+    }
+
+    function renderSheet() {
+      const thread = state.threads.find((t) => t.id === state.selectedThreadId);
+      const open = !!thread;
+      $("sheet").classList.toggle("open", open);
+      if (!thread) {
+        $("messages").innerHTML = "";
+        $("messages").classList.remove("empty");
+        $("sheet").classList.remove("compose-only");
+        state.showInvitePicker = false;
+        renderInvitePicker();
+        updateComposerHighlight();
+        return;
+      }
+
+      $("messages").innerHTML = thread.messages
+        .map((m) => {
+          const a = authors[m.author];
+          return `
+            <div class="msg">
+              <div class="avatar" style="background:${a.color}">${a.initial}</div>
+              <div class="msg-body">
+                <div class="msg-meta">
+                  <span class="name">${a.username}</span>
+                  <span class="time">${m.time}</span>
+                </div>
+                <div class="msg-text">${formatMessageText(m.text)}</div>
+              </div>
+              <button class="trash" data-msg="${m.id}" title="Delete"><i data-lucide="trash-2"></i></button>
+            </div>`;
+        })
+        .join("");
+
+      const isEmptyCompose = thread.messages.length === 0 && !state.showInvitePicker;
+      $("messages").classList.toggle("empty", isEmptyCompose);
+      $("sheet").classList.toggle("compose-only", isEmptyCompose);
+      $("messages").querySelectorAll(".trash").forEach((btn) => {
+        btn.addEventListener("click", () => deleteMessage(thread.id, btn.dataset.msg));
+      });
+      renderInvitePicker();
+      updateComposerHighlight();
+      refreshIcons();
+      syncComposerToKeyboard();
+    }
+
+    function refreshIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function updateSendButton() {
+      const value = $("replyInput").value;
+      const hasText = value.trim().length > 0;
+      // Figma 82:7451 — Send when drafting; @ stays for another mention
+      $("sendBtn").classList.toggle("hidden", !hasText);
+      $("atBtn").classList.remove("hidden");
+
+      if (activeMentionQuery() !== null) {
+        state.showInvitePicker = true;
+      }
+      renderInvitePicker();
+      updateComposerHighlight();
+    }
+
+    function render() {
+      renderChrome();
+      renderPins();
+      renderSheet();
+      updateSendButton();
+    }
+
+    function enterCommenting() {
+      state.mode = "commenting";
+      state.selectedThreadId = null;
+      state.showInvitePicker = false;
+      state.showProtoSettings = false;
+      state.showMoreMenu = false;
+      state.showSettingsSheet = false;
+      render();
+    }
+
+    function exitCommenting() {
+      state.mode = "editing";
+      state.selectedThreadId = null;
+      state.showInvitePicker = false;
+      $("replyInput").value = "";
+      state.threads = state.threads.filter((t) => t.messages.length > 0);
+      render();
+    }
+
+    function toggleVisibility() {
+      state.commentsVisibleOnCanvas = !state.commentsVisibleOnCanvas;
+      if (!state.commentsVisibleOnCanvas) {
+        state.showToast = true;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          state.showToast = false;
+          render();
+        }, 4000);
+      } else {
+        state.showToast = false;
+        clearTimeout(toastTimer);
+      }
+      render();
+    }
+
+    function openThread(id) {
+      const thread = state.threads.find((t) => t.id === id);
+      if (thread) thread.unread = false; // opening marks as read
+      state.selectedThreadId = id;
+      state.showInvitePicker = false;
+      state.showProtoSettings = false;
+      $("replyInput").value = "";
+      // Clear leftover keyboard lift + fix stuck landscape class in real portrait
+      document.documentElement.style.removeProperty("--sheet-bottom");
+      if (isRealMobile() && window.matchMedia("(orientation: portrait)").matches) {
+        applyOrientation("portrait");
+      }
+      render();
+      setTimeout(() => $("replyInput").focus({ preventScroll: true }), 280);
+    }
+
+    function closeSheet() {
+      state.selectedThreadId = null;
+      state.showInvitePicker = false;
+      state.showInviteSheet = false;
+      $("replyInput").value = "";
+      $("replyInput").blur();
+      document.documentElement.style.removeProperty("--sheet-bottom");
+      state.threads = state.threads.filter((t) => t.messages.length > 0);
+      render();
+      renderInviteSheet();
+    }
+
+    function canvasTap(e) {
+      // Tap empty canvas closes the open comment sheet (any mode)
+      if (state.selectedThreadId) {
+        closeSheet();
+        return;
+      }
+      // New pins only while placing comments
+      if (state.mode !== "commenting") return;
+      const content = $("content").getBoundingClientRect();
+      let x = e.clientX - content.left - 16;
+      let y = e.clientY - content.top - 16;
+      if (isLandscapeNow() && content.width > 0 && content.height > 0) {
+        x = ((e.clientX - content.left) / content.width) * 402;
+        y = ((e.clientY - content.top) / content.height) * 812;
+      }
+      const id = "t" + Date.now();
+      state.threads.push({
+        id,
+        x: Math.max(0, x),
+        y: Math.max(0, y),
+        unread: true,
+        messages: [],
+      });
+      openThread(id);
+    }
+
+    function sendReply() {
+      const text = $("replyInput").value.trim();
+      if (!text || !state.selectedThreadId) return;
+      const thread = state.threads.find((t) => t.id === state.selectedThreadId);
+      if (!thread) return;
+      const now = new Date();
+      const time =
+        "Today " +
+        now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      thread.messages.push({
+        id: "m" + Date.now(),
+        author: "olya",
+        text,
+        time,
+      });
+      // Own reply keeps thread read; someone else's would flip unread
+      thread.unread = false;
+      state.showInvitePicker = false;
+      $("replyInput").value = "";
+      render();
+    }
+
+    function deleteMessage(threadId, msgId) {
+      const thread = state.threads.find((t) => t.id === threadId);
+      if (!thread) return;
+      thread.messages = thread.messages.filter((m) => m.id !== msgId);
+      if (thread.messages.length === 0) {
+        state.threads = state.threads.filter((t) => t.id !== threadId);
+        state.selectedThreadId = null;
+      }
+      render();
+    }
+
+    $("commentsBtn").addEventListener("click", enterCommenting);
+    $("moreBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      // Option 2: More → menu → Settings. Option 3: More → menu with Hide comments.
+      if (state.protoOption !== 2 && state.protoOption !== 3) return;
+      state.showMoreMenu = !state.showMoreMenu;
+      state.showProtoSettings = false;
+      renderMoreMenu();
+      renderProtoSettings();
+    });
+    $("moreHideCommentsBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (state.protoOption !== 3) return;
+      state.showMoreMenu = false;
+      toggleVisibility();
+    });
+    $("moreSettingsBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openSettingsSheet();
+    });
+    $("backBtn").addEventListener("click", () => {
+      if (state.selectedThreadId) {
+        closeSheet();
+        return;
+      }
+      exitCommenting();
+    });
+    $("eyeBtn").addEventListener("click", toggleVisibility);
+
+    $("settingsCloseBtn").addEventListener("click", closeSettingsSheet);
+    $("settingsDoneBtn").addEventListener("click", closeSettingsSheet);
+    $("settingsOverlay").addEventListener("click", (e) => {
+      if (e.target === $("settingsOverlay")) closeSettingsSheet();
+    });
+    $("settingsSheet").addEventListener("click", (e) => e.stopPropagation());
+    $("settingsSheet").querySelectorAll("[data-settings-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-settings-toggle");
+        if (key === "comments") {
+          if (state.protoOption === 2) {
+            toggleVisibility();
+          } else {
+            btn.classList.toggle("on");
+            btn.setAttribute("aria-pressed", btn.classList.contains("on") ? "true" : "false");
+          }
+          return;
+        }
+        btn.classList.toggle("on");
+        btn.setAttribute("aria-pressed", btn.classList.contains("on") ? "true" : "false");
+      });
+    });
+    $("settingsColors").addEventListener("click", (e) => {
+      const swatch = e.target.closest(".settings-swatch");
+      if (!swatch) return;
+      $("settingsColors").querySelectorAll(".settings-swatch").forEach((el) => {
+        el.classList.toggle("selected", el === swatch);
+      });
+    });
+    $("toastClose").addEventListener("click", () => {
+      state.showToast = false;
+      render();
+    });
+    // Single handler on content: empty canvas closes sheet / places pin
+    $("content").addEventListener("click", (e) => {
+      if (e.target.closest(".pin")) return;
+      canvasTap(e);
+    });
+    $("replyInput").addEventListener("input", updateSendButton);
+    $("replyInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendReply();
+      }
+    });
+    $("replyInput").addEventListener("focus", () => {
+      composerFocused = true;
+      // Keep the sheet above the keyboard; don't let Safari scroll the field away
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        syncComposerToKeyboard();
+      }, 50);
+      setTimeout(syncComposerToKeyboard, 300);
+      setTimeout(syncComposerToKeyboard, 600);
+    });
+    $("replyInput").addEventListener("blur", () => {
+      composerFocused = false;
+      setTimeout(syncComposerToKeyboard, 100);
+    });
+    // Tap anywhere on the composer row — iOS needs a direct gesture to open the keyboard
+    document.querySelector(".reply-composer")?.addEventListener(
+      "touchend",
+      (e) => {
+        const input = $("replyInput");
+        if (!input || document.activeElement === input) return;
+        e.preventDefault();
+        input.focus();
+      },
+      { passive: false }
+    );
+    $("inviteEmailInput").addEventListener("focus", () => {
+      setTimeout(syncComposerToKeyboard, 50);
+      setTimeout(syncComposerToKeyboard, 300);
+    });
+    $("inviteEmailInput").addEventListener("blur", () => {
+      setTimeout(syncComposerToKeyboard, 100);
+    });
+    $("sendBtn").addEventListener("click", sendReply);
+    $("atBtn").addEventListener("click", toggleInvitePicker);
+    $("inviteHeaderBtn").addEventListener("click", openInviteSheet);
+    $("inviteSheetClose").addEventListener("click", closeInviteSheet);
+    $("inviteSheetBack").addEventListener("click", () => {
+      if (state.inviteSheetStep === "success") {
+        state.inviteSheetStep = "form";
+        renderInviteSheet();
+        return;
+      }
+      closeInviteSheet();
+    });
+    $("inviteOverlay").addEventListener("click", (e) => {
+      if (e.target === $("inviteOverlay")) closeInviteSheet();
+    });
+    $("inviteSheet").addEventListener("click", (e) => e.stopPropagation());
+    $("inviteEmailInput").addEventListener("input", (e) => {
+      state.inviteEmail = e.target.value;
+      renderInviteSheet();
+    });
+    $("inviteEmailInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendInvite();
+      }
+    });
+    $("inviteSheet").querySelectorAll(".invite-role").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.inviteRole = btn.getAttribute("data-role") === "editor" ? "editor" : "viewer";
+        renderInviteSheet();
+      });
+    });
+    $("sendInviteBtn").addEventListener("click", sendInvite);
+    $("inviteContinueBtn").addEventListener("click", finishInviteSuccess);
+
+    $("protoSettingsBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.showProtoSettings = !state.showProtoSettings;
+      renderProtoSettings();
+    });
+    $("protoSettingsMenu").addEventListener("click", (e) => {
+      const orient = e.target.closest("[data-orientation]");
+      const item = e.target.closest("[data-proto-option]");
+      if (orient) {
+        e.stopPropagation();
+        applyOrientation(orient.getAttribute("data-orientation"));
+        state.showProtoSettings = false;
+        renderProtoSettings();
+        return;
+      }
+      if (!item) return;
+      e.stopPropagation();
+      state.protoOption = Number(item.getAttribute("data-proto-option"));
+      try { localStorage.setItem("comnts-proto-option", String(state.protoOption)); } catch (_) {}
+      state.showProtoSettings = false;
+      if (state.protoOption !== 2 && state.protoOption !== 3) state.showMoreMenu = false;
+      render();
+    });
+    document.addEventListener("click", (e) => {
+      if (state.showProtoSettings && !e.target.closest("#protoSettings")) {
+        state.showProtoSettings = false;
+        renderProtoSettings();
+      }
+      if (state.showMoreMenu && !e.target.closest("#moreBtn, #moreMenu")) {
+        state.showMoreMenu = false;
+        renderMoreMenu();
+      }
+    });
+
+    // Install tip (Safari can't auto-hide chrome — home screen = real fullscreen)
+    const tip = $("installTip");
+    const tipKey = "comnts-install-tip-dismissed";
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+    if (isStandalone || localStorage.getItem(tipKey) === "1") {
+      tip.classList.add("hidden");
+    }
+    $("installTipClose").addEventListener("click", () => {
+      tip.classList.add("hidden");
+      localStorage.setItem(tipKey, "1");
+    });
+
+    // Stop iOS rubber-band scrolling the page behind the prototype
+    document.addEventListener(
+      "touchmove",
+      (e) => {
+        if (
+          e.target.closest(
+            ".sheet, .invite-sheet, .settings-sheet, .messages, .invite-picker, .reply-composer, .reply-bar, input, textarea"
+          )
+        )
+          return;
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", () => {
+        if (composerFocused) {
+          syncComposerToKeyboard();
+          return;
+        }
+        syncAppHeight();
+        syncComposerToKeyboard();
+      });
+      window.visualViewport.addEventListener("scroll", syncComposerToKeyboard);
+    }
+    // Physical rotate — same as Landscape button, with iOS timing retries
+    window.addEventListener("orientationchange", onDeviceRotated);
+    try {
+      window.matchMedia("(orientation: landscape)").addEventListener("change", onDeviceRotated);
+    } catch (_) {
+      window.matchMedia("(orientation: landscape)").addListener(onDeviceRotated);
+    }
+    if (window.screen && window.screen.orientation && window.screen.orientation.addEventListener) {
+      window.screen.orientation.addEventListener("change", onDeviceRotated);
+    }
+    window.addEventListener("resize", () => {
+      if (composerFocused) {
+        syncComposerToKeyboard();
+        return;
+      }
+      const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+      if (!lastAspect || Math.abs(aspect - lastAspect) > 0.2) {
+        lastAspect = aspect;
+        onDeviceRotated();
+      } else {
+        syncAppHeight();
+      }
+    });
+
+    render();
+    renderInviteSheet();
+    syncAppHeight();
+    lastAspect = window.innerWidth / Math.max(1, window.innerHeight);
+    if (isRealMobile()) onDeviceRotated();
+    else applyOrientation(state.orientation);
+    refreshIcons();
+  </script>
+</body>
+</html>
