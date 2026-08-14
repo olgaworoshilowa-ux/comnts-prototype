@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#f5f5f5" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta name="comnts-build" content="2026-08-14-standalone-fixed" />
+  <meta name="comnts-build" content="2026-08-14-catalogue-bleed" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/sofa.png" />
   <title>Comnts</title>
@@ -3053,35 +3053,51 @@
     }
 
     /*
-     * Mobile portrait catalogue — last word.
-     * Solid glass base + safe-area on the panel (not tabs) so the grid never shows through.
+     * MOBILE PORTRAIT CATALOGUE — final authority.
+     * Reparented to <body> via JS (#catalogue). Bleed layer kills grid gap on Home Screen.
      */
-    @media (max-width: 520px), (hover: none) and (pointer: coarse) {
-      @media (orientation: portrait) {
-        .catalogue,
-        .phone .catalogue,
-        #app .catalogue,
-        html.landscape .catalogue,
-        html.landscape #app .catalogue,
-        body.landscape .catalogue,
-        .phone.landscape .catalogue,
-        #app.landscape .catalogue {
-          position: fixed !important;
-          bottom: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          width: 100% !important;
-          padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-          border-radius: 28px 28px 0 0 !important;
-          background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
-            #f5f5f5 !important;
-        }
-        .catalogue .tabs,
-        #app .catalogue .tabs {
-          padding: 8px !important;
-        }
-      }
+    html.mobile-portrait #catalogueBleed {
+      display: block;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(96px + env(safe-area-inset-bottom, 0px));
+      background: #f5f5f5;
+      z-index: 9998;
+      pointer-events: none;
+    }
+    #catalogueBleed { display: none; }
+    html.mobile-portrait #catalogue {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      border-radius: 28px 28px 0 0 !important;
+      background: #f5f5f5 !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.07) !important;
+      overflow: visible !important;
+      z-index: 9999 !important;
+      transform: none !important;
+      box-sizing: border-box !important;
+    }
+    html.mobile-portrait #catalogue .tabs {
+      padding: 8px 8px max(8px, env(safe-area-inset-bottom, 0px)) !important;
+      margin-top: 8px !important;
+      flex: 0 0 auto !important;
+    }
+    html.mobile-portrait #catalogue.catalogue-hidden,
+    html.mobile-portrait #catalogueBleed.catalogue-hidden {
+      display: none !important;
     }
   </style>
 </head>
@@ -3217,7 +3233,7 @@
           </div>
         </div>
 
-        <div class="catalogue liquid-glass">
+        <div class="catalogue liquid-glass" id="catalogue">
           <div class="catalogue-handle"></div>
           <div class="tabs">
             <button class="tab" type="button">
@@ -3591,6 +3607,7 @@
       renderProtoSettings();
       renderMoreMenu();
       renderSettingsSheet();
+      syncCatalogueVisibility();
       refreshIcons();
     }
 
@@ -3672,6 +3689,8 @@
       const app = $("app");
       if (phone) phone.classList.toggle("landscape", on);
       if (app) app.classList.toggle("landscape", on);
+      document.documentElement.classList.toggle("portrait", !on);
+      syncMobilePortraitClass();
       // Only re-layout pins when orientation actually changed (stops flicker)
       if (changed) {
         renderPins();
@@ -3711,8 +3730,45 @@
     let lastAspect = 0;
     let rotateRetryTimers = [];
 
+    function syncMobilePortraitClass() {
+      if (!isRealMobile()) {
+        document.documentElement.classList.remove("mobile-portrait");
+        return;
+      }
+      const portrait = window.innerHeight >= window.innerWidth;
+      document.documentElement.classList.toggle("mobile-portrait", portrait);
+      document.documentElement.classList.toggle("portrait", portrait);
+    }
+
+    /** Move catalogue to body so position:fixed is always vs viewport (Home Screen safe). */
+    function mountMobileCatalogue() {
+      if (!isRealMobile()) return;
+      const cat = document.getElementById("catalogue");
+      if (!cat) return;
+      if (!document.getElementById("catalogueBleed")) {
+        const bleed = document.createElement("div");
+        bleed.id = "catalogueBleed";
+        bleed.setAttribute("aria-hidden", "true");
+        document.body.appendChild(bleed);
+      }
+      if (cat.parentElement !== document.body) {
+        document.body.appendChild(cat);
+      }
+    }
+
+    function syncCatalogueVisibility() {
+      const cat = document.getElementById("catalogue");
+      const bleed = document.getElementById("catalogueBleed");
+      const hide =
+        state.mode === "commenting" ||
+        !!state.selectedThreadId;
+      if (cat) cat.classList.toggle("catalogue-hidden", hide);
+      if (bleed) bleed.classList.toggle("catalogue-hidden", hide || !document.documentElement.classList.contains("mobile-portrait"));
+    }
+
     function syncViewportShell() {
       if (!isRealMobile()) return;
+      syncMobilePortraitClass();
       const vv = window.visualViewport;
       let h = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
       if (vv && !composerFocused) {
@@ -3779,6 +3835,7 @@
         const next = land ? "landscape" : "portrait";
         lastOrientApplied = next;
         applyOrientation(next);
+        syncCatalogueVisibility();
       };
       run();
       [100, 300, 600].forEach((ms) => {
@@ -4569,7 +4626,10 @@
 
     render();
     renderInviteSheet();
+    mountMobileCatalogue();
     syncAppHeight();
+    syncMobilePortraitClass();
+    syncCatalogueVisibility();
     lastAspect = window.innerWidth / Math.max(1, window.innerHeight);
     if (isRealMobile()) onDeviceRotated();
     else applyOrientation(state.orientation);
