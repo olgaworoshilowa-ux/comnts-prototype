@@ -13,10 +13,9 @@
   <meta name="theme-color" content="#f5f5f5" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta name="comnts-build" content="2026-08-14-live" />
+  <meta name="comnts-build" content="2026-08-14-live2" />
   <script>
-    /* Runs before CSS — marks HTML version even if stylesheet is cached */
-    document.documentElement.dataset.comntsBuild = "2026-08-14-live";
+    document.documentElement.dataset.comntsBuild = "2026-08-14-live2";
   </script>
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/sofa.png" />
@@ -231,50 +230,14 @@
         left: auto !important;
       }
 
-      /* Catalogue — mobile portrait: Figma 87px, flush bottom, NO safe-area hole */
-      .catalogue,
-      .phone .catalogue,
-      #app .catalogue,
-      #catalogue {
-        position: fixed !important;
-        top: auto !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        height: 87px !important;
-        min-height: 87px !important;
-        max-height: 87px !important;
-        padding: 0 !important;
-        border-radius: 28px 28px 0 0 !important;
-        transform: none !important;
-        background: #f5f5f5 !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        display: flex !important;
-        flex-direction: column !important;
-        box-sizing: border-box !important;
-        z-index: 99999 !important;
-        overflow: hidden !important;
-      }
-      .catalogue-handle {
-        width: 80px !important;
-        height: 4px !important;
-        margin-top: 8px !important;
-        background: #c4c4c4 !important;
-        flex-shrink: 0 !important;
-      }
-      .catalogue .tabs,
-      #catalogue .tabs {
-        margin-top: 8px !important;
-        padding: 8px !important;
-        flex: 0 0 auto !important;
-      }
-      .canvas-tools {
-        top: auto !important;
-        left: auto !important;
-        right: 12px !important;
-        bottom: 96px !important;
+      /* Portrait catalogue — ONLY in portrait (landscape uses floating card below) */
+      @media (orientation: portrait) {
+        .canvas-tools {
+          top: auto !important;
+          left: auto !important;
+          right: 12px !important;
+          bottom: 96px !important;
+        }
       }
 
       /* One safe-area only — on reply bar, not also on the sheet */
@@ -401,10 +364,16 @@
       }
       @media (orientation: landscape) {
       html.landscape .catalogue,
+      html.landscape #catalogue,
       body.landscape .catalogue,
+      body.landscape #catalogue,
       .phone.landscape .catalogue,
+      .phone.landscape #catalogue,
       html.landscape #app .catalogue,
-      #app.landscape .catalogue {
+      #app.landscape .catalogue,
+      #app.landscape #catalogue,
+      html.mobile-landscape #catalogue {
+        position: fixed !important;
         left: max(16px, env(safe-area-inset-left, 0px)) !important;
         right: auto !important;
         width: min(356px, calc(100% - 200px)) !important;
@@ -415,6 +384,9 @@
         min-height: 0 !important;
         padding-bottom: env(safe-area-inset-bottom, 0px) !important;
         border-radius: 24px !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+          #f5f5f5 !important;
       }
       html.landscape .canvas-tools,
       body.landscape .canvas-tools {
@@ -2752,7 +2724,8 @@
       }
       .catalogue,
       .phone .catalogue,
-      #app .catalogue {
+      #app .catalogue,
+      #catalogue {
         left: max(16px, env(safe-area-inset-left, 0px)) !important;
         right: auto !important;
         width: min(356px, calc(100% - 200px)) !important;
@@ -2763,6 +2736,7 @@
         max-height: none !important;
         border-radius: 24px !important;
         padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        position: fixed !important;
         background:
           linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
           #f5f5f5 !important;
@@ -3115,6 +3089,52 @@
     html.mobile-portrait #catalogue.catalogue-hidden,
     html.mobile-portrait #catalogueBleed.catalogue-hidden {
       display: none !important;
+    }
+
+    /*
+     * MOBILE LANDSCAPE catalogue — floating card (must beat portrait #catalogue rules).
+     */
+    @media (max-width: 520px), (hover: none) and (pointer: coarse) {
+      @media (orientation: landscape) {
+        html.landscape #catalogue,
+        html.mobile-landscape #catalogue,
+        body.landscape #catalogue,
+        .phone.landscape #catalogue,
+        #app.landscape #catalogue {
+          position: fixed !important;
+          left: max(16px, env(safe-area-inset-left, 0px)) !important;
+          right: auto !important;
+          width: min(356px, calc(100% - 200px)) !important;
+          bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+          top: auto !important;
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+          border-radius: 24px !important;
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 42%),
+            #f5f5f5 !important;
+          backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+          -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+          box-shadow: var(--glass-shadow), var(--glass-highlight), var(--glass-rim) !important;
+          overflow: hidden !important;
+          z-index: 99999 !important;
+          transform: none !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+        html.landscape #catalogue .tabs,
+        html.mobile-landscape #catalogue .tabs {
+          padding: 8px !important;
+          margin-top: 0 !important;
+          flex: 0 0 auto !important;
+        }
+        html.landscape #catalogueBleed,
+        html.mobile-landscape #catalogueBleed {
+          display: none !important;
+        }
+      }
     }
   </style>
 </head>
@@ -3751,11 +3771,12 @@
 
     function syncMobilePortraitClass() {
       if (!isRealMobile()) {
-        document.documentElement.classList.remove("mobile-portrait");
+        document.documentElement.classList.remove("mobile-portrait", "mobile-landscape");
         return;
       }
       const portrait = window.innerHeight >= window.innerWidth;
       document.documentElement.classList.toggle("mobile-portrait", portrait);
+      document.documentElement.classList.toggle("mobile-landscape", !portrait);
       document.documentElement.classList.toggle("portrait", portrait);
     }
 
@@ -3796,7 +3817,13 @@
       }
 
       if (!portrait || !cat) {
-        if (cat) cat.style.cssText = "";
+        if (cat) {
+          cat.style.cssText = "";
+          const handleEl = cat.querySelector(".catalogue-handle");
+          if (handleEl) handleEl.style.cssText = "";
+          const tabsEl = cat.querySelector(".tabs");
+          if (tabsEl) tabsEl.style.cssText = "";
+        }
         if (bleed) bleed.style.display = "none";
         return;
       }
