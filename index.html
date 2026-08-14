@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#f5f5f5" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta name="comnts-build" content="2026-08-14-catalogue-87" />
+  <meta name="comnts-build" content="2026-08-14-catalogue-no-hole" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/sofa.png" />
   <title>Comnts</title>
@@ -227,7 +227,7 @@
         left: auto !important;
       }
 
-      /* Catalogue — Figma 133:23112 (87px) + safe-area, flush to bottom. Leave .ask-bar alone. */
+      /* Catalogue — Figma 133:23112: hug tabs, safe-area only under tab row (no empty hole) */
       .catalogue,
       .phone .catalogue,
       #app .catalogue {
@@ -236,10 +236,10 @@
         left: 0 !important;
         right: 0 !important;
         width: 100% !important;
-        height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
-        min-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
-        max-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
-        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding-bottom: 0 !important;
         border-radius: 28px 28px 0 0 !important;
         transform: none !important;
         background: rgba(245, 245, 245, 0.6) !important;
@@ -252,18 +252,18 @@
         height: 4px !important;
         margin-top: 8px !important;
         background: #c4c4c4 !important;
+        flex-shrink: 0 !important;
       }
       .catalogue .tabs {
         margin-top: 8px !important;
-        padding: 8px !important;
-        flex: 1 !important;
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        flex: 0 0 auto !important;
       }
       .canvas-tools {
         top: auto !important;
         left: auto !important;
         right: 12px !important;
-        /* Sit just above Figma 87px catalogue + safe-area */
-        bottom: calc(95px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
       }
 
       /* One safe-area only — on reply bar, not also on the sheet */
@@ -511,12 +511,13 @@
       height: auto;
       min-height: 0;
       border-radius: 24px;
-      padding-bottom: 8px;
+      padding-bottom: 0;
     }
     html.landscape .catalogue .tabs {
       justify-content: center;
-      padding: 8px;
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
       margin-top: 0;
+      flex: 0 0 auto;
     }
     html.landscape .catalogue .tab {
       width: 68px;
@@ -1219,9 +1220,7 @@
       color: var(--text-beta);
     }
 
-    /* ===== Catalogue — Figma 133:23112 = 402×87 (tabs + handle).
-       On phone: + safe-area inside, flush to bottom (no hole under the bar).
-       Do NOT touch .ask-bar here. ===== */
+    /* ===== Catalogue — Figma 133:23112 = 402×87. Phone: hug tabs; safe-area under tab labels only. ===== */
     .catalogue {
       position: absolute;
       left: 0;
@@ -1229,16 +1228,15 @@
       top: auto;
       bottom: 0;
       width: 100%;
-      /* Figma frame height 87px; safe-area pads inside so the outer edge stays flush */
-      height: calc(87px + env(safe-area-inset-bottom, 0px));
-      min-height: calc(87px + env(safe-area-inset-bottom, 0px));
-      max-height: calc(87px + env(safe-area-inset-bottom, 0px));
+      height: auto;
+      min-height: 0;
+      max-height: none;
       z-index: 28;
       border-radius: 38px 38px 0 0;
       box-shadow: 0 4px 40px rgba(0, 0, 0, 0.16), var(--glass-highlight);
       overflow: hidden;
       box-sizing: border-box;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-bottom: 0;
       display: flex;
       flex-direction: column;
     }
@@ -1268,13 +1266,13 @@
       flex-shrink: 0;
     }
     .tabs {
-      /* Figma tabulation bar: top 20 → after handle; padding 8 */
+      /* Figma tabulation bar: y=20, h=57, padding 8 */
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px;
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
       margin-top: 8px;
-      flex: 1;
+      flex: 0 0 auto;
       box-sizing: border-box;
     }
     .tab {
@@ -2082,7 +2080,7 @@
       .phone.landscape .sheet-handle {
         display: block !important;
       }
-      /* Catalogue: Figma 87px bar in portrait even if landscape class stuck */
+      /* Catalogue: full-width bottom bar in portrait even if landscape class stuck */
       .catalogue,
       #app .catalogue,
       html.landscape .catalogue,
@@ -2095,11 +2093,16 @@
         width: 100% !important;
         top: auto !important;
         bottom: 0 !important;
-        height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
-        min-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
-        max-height: calc(87px + env(safe-area-inset-bottom, 0px)) !important;
-        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding-bottom: 0 !important;
         border-radius: 28px 28px 0 0 !important;
+      }
+      .catalogue .tabs,
+      #app .catalogue .tabs {
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        flex: 0 0 auto !important;
       }
     }
 
@@ -2696,12 +2699,17 @@
         width: min(356px, calc(100% - 200px)) !important;
         bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
         top: auto !important;
-        /* Landscape floating card — hug Figma 87px content, not full-bleed height lock */
         height: auto !important;
-        min-height: 87px !important;
+        min-height: 0 !important;
         max-height: none !important;
         border-radius: 24px !important;
-        padding-bottom: 8px !important;
+        padding-bottom: 0 !important;
+      }
+      .catalogue .tabs,
+      .phone .catalogue .tabs,
+      #app .catalogue .tabs {
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        flex: 0 0 auto !important;
       }
       .canvas-tools {
         left: auto !important;
