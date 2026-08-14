@@ -13,9 +13,9 @@
   <meta name="theme-color" content="#f5f5f5" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta name="comnts-build" content="2026-08-14-live2" />
+  <meta name="comnts-build" content="2026-08-14-live3" />
   <script>
-    document.documentElement.dataset.comntsBuild = "2026-08-14-live2";
+    document.documentElement.dataset.comntsBuild = "2026-08-14-live3";
   </script>
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/sofa.png" />
@@ -495,8 +495,9 @@
       width: 356px;
       height: auto;
       min-height: 0;
+      max-height: none;
       border-radius: 24px;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-bottom: 8px;
     }
     html.landscape .catalogue .tabs {
       justify-content: center;
@@ -1248,7 +1249,7 @@
       color: var(--text-beta);
     }
 
-    /* ===== Catalogue — Figma 133:23112. Mobile: flush bottom, solid glass base. ===== */
+    /* ===== Catalogue — Figma 133:23112 = 402×87 (handle + tabs). Portrait only. ===== */
     .catalogue {
       position: absolute;
       left: 0;
@@ -1256,32 +1257,33 @@
       top: auto;
       bottom: 0;
       width: 100%;
-      height: auto;
-      min-height: 0;
-      max-height: none;
+      height: 87px;
+      min-height: 87px;
+      max-height: 87px;
       z-index: 28;
       border-radius: 38px 38px 0 0;
       box-shadow: 0 4px 40px rgba(0, 0, 0, 0.16), var(--glass-highlight);
       overflow: hidden;
       box-sizing: border-box;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-bottom: 0;
       display: flex;
       flex-direction: column;
     }
-    /* Desktop phone mock only — Figma portrait peek (tall sheet under tabs) */
+    /* Desktop phone mock — same Figma 87px bar, flush to phone bottom. NOT the 407px peek. */
     @media (hover: hover) and (pointer: fine) {
       html:not(.landscape) .phone:not(.landscape) .catalogue {
-        left: -1px;
-        right: auto;
-        top: 786px;
-        bottom: auto;
-        width: 402px;
-        height: 407px;
-        min-height: 0;
-        max-height: none;
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: 87px;
+        min-height: 87px;
+        max-height: 87px;
         padding-bottom: 0;
         border-radius: 38px 38px 0 0;
-        display: block;
+        display: flex;
+        flex-direction: column;
       }
     }
     .catalogue-handle {
